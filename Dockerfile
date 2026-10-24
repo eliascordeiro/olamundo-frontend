@@ -13,5 +13,6 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # a partir de qualquer arquivo em /etc/nginx/templates/*.template no start-up.
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 ENV PORT=80
+ENV BACKEND_URL=http://backend:8081
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
