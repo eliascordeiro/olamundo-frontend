@@ -51,10 +51,13 @@ ao backend. Configure:
 | Variavel em runtime | Exemplo | Finalidade |
 | --- | --- | --- |
 | `PORT` | `80` | Porta nginx, normalmente definida pela hospedagem |
-| `BACKEND_URL` | `https://sua-api.up.railway.app` | URL do backend, **sem barra final e sem /api** |
+| `BACKEND_URL` | `https://olamundo-production-f50d.up.railway.app` | URL padrao do backend, **sem barra final e sem /api** |
 
-`VITE_API_BASE_URL` permanece vazio no build. No Railway, defina `BACKEND_URL`
-com a URL real do servico Java ou o endereco da rede privada.
+`VITE_API_BASE_URL` permanece vazio no build. A imagem usa por padrao
+`https://olamundo-production-f50d.up.railway.app`. No Railway, remova qualquer
+override `BACKEND_URL=http://backend:8081` ou substitua-o pela URL real do
+servico Java, pois variaveis do servico prevalecem sobre o padrao da imagem.
+Se usar a rede privada, informe um hostname que resolva nesse ambiente.
 O navegador conversa somente com o dominio do frontend; o proxy repassa os
 cookies sem Domain e os mantem na mesma origem. Use HTTPS publico e mantenha
 `SESSION_COOKIE_SECURE=true` no backend. Para HTTPS upstream, nginx envia SNI.
