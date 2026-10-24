@@ -28,6 +28,22 @@ O cookie HttpOnly e administrado pelo backend e inacessivel ao JavaScript.
 Erros de rede e validacao sao exibidos; uma sessao expirada volta ao login.
 O mural preserva as mensagens existentes e e compartilhado pelos usuarios.
 
+## Dados remotos com React Query
+
+TanStack Query gerencia a sessao e o mural; formularios e senhas continuam
+no estado local dos componentes. Os hooks ficam em `src/queries.js`, sobre
+a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
+
+- Consultas ficam frescas por 30 segundos e podem atualizar ao recuperar
+  foco/conexao. Isso nao substitui polling, SSE ou WebSocket para tempo real.
+- Apenas falhas de rede e HTTP 5xx de consultas recebem uma nova tentativa.
+  Mutacoes nunca sao repetidas automaticamente.
+- Publicar uma mensagem invalida a consulta do mural daquele usuario.
+- Logout, expiracao de sessao (401) e novo login cancelam consultas e removem
+  dados privados anteriores. Consultas HTTP respeitam o sinal de cancelamento.
+- O cache existe apenas em memoria, sem persistencia no navegador. Mutacoes
+  de autenticacao sao resetadas apos a tentativa e descartadas quando inativas.
+
 ## Validacao
 
 ```bash
@@ -42,6 +58,16 @@ em localhost:8081 e MongoDB de **testes**, sem dados reais. Eles criam contas
 `nexo-e2e-...@example.com` e mensagens; descarte esse banco isolado ao terminar.
 Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, mural,
 logout e viewport movel. Nao rode contra producao.
+
+Os testes `query-*.spec.js` validam a integracao do React Query no navegador
+com API interceptada: sessao, CSRF, invalidacao do mural, retries, erros e
+isolamento/cancelamento de consultas entre sessoes. Nao exigem backend:
+
+```bash
+npm test -- e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
+```
+
+Esses testes nao substituem os E2E com Spring Boot e MongoDB reais.
 
 ## Producao / Railway
 

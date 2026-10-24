@@ -15,9 +15,12 @@ async function request(path, options = {}) {
       ...options,
       credentials: 'include',
       headers: { ...options.headers },
-      signal: AbortSignal.timeout(15000),
+      signal: options.signal
+        ? AbortSignal.any([options.signal, AbortSignal.timeout(15000)])
+        : AbortSignal.timeout(15000),
     })
   } catch (error) {
+    if (options.signal?.aborted) throw error
     throw new ApiError(
       error.name === 'TimeoutError'
         ? 'O servidor demorou para responder. Tente novamente.'
@@ -38,8 +41,8 @@ async function request(path, options = {}) {
     : response.text().then((text) => (text ? JSON.parse(text) : null))
 }
 
-export const getCurrentUser = () => request('/api/auth/me')
-export const getMessages = () => request('/api/mensagens')
+export const getCurrentUser = ({ signal } = {}) => request('/api/auth/me', { signal })
+export const getMessages = ({ signal } = {}) => request('/api/mensagens', { signal })
 
 async function post(path, body) {
   const { token } = await request('/api/auth/csrf')

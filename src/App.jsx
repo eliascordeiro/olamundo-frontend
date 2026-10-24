@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { getCurrentUser, getMessages, login, logout, register, sendMessage } from './api'
+import { useRef, useState } from 'react'
+import { useLogin, useLogout, useMessages, useRegister, useSendMessage, useSession } from './queries'
 import './App.css'
 
 function Icon({ name, size = 20, ...props }) {
@@ -43,11 +43,13 @@ function BusinessPanel() {
   )
 }
 
-function AuthForm({ onAuthenticated }) {
+function AuthForm() {
   const [year] = useState(() => new Date().getFullYear())
   const [mode, setMode] = useState('login')
   const [showPassword, setShowPassword] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const loginMutation = useLogin()
+  const registerMutation = useRegister()
+  const busy = loginMutation.isPending || registerMutation.isPending
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [values, setValues] = useState({ name: '', email: '', password: '' })
@@ -71,22 +73,24 @@ function AuthForm({ onAuthenticated }) {
       setError('A senha deve ter no máximo 72 bytes. Reduza a quantidade de caracteres especiais.')
       return
     }
-    setBusy(true)
     try {
       if (isRegister) {
-        await register(values.name.trim(), values.email.trim(), values.password)
+        await registerMutation.mutateAsync({
+          name: values.name.trim(), email: values.email.trim(), password: values.password,
+        })
         setMode('login')
         setValues((previous) => ({ ...previous, password: '' }))
         setShowPassword(false)
         setNotice('Conta criada! Entre com seu e-mail e senha para começar.')
         heading.current?.focus()
       } else {
-        onAuthenticated(await login(values.email.trim(), values.password))
+        await loginMutation.mutateAsync({ email: values.email.trim(), password: values.password })
       }
     } catch (err) {
       setError(err.message)
     } finally {
-      setBusy(false)
+      loginMutation.reset()
+      registerMutation.reset()
     }
   }
 
@@ -121,43 +125,21 @@ function AuthForm({ onAuthenticated }) {
   )
 }
 
-function Workspace({ user, onSignedOut }) {
-  const [messages, setMessages] = useState([])
+function Workspace({ user }) {
+  const messagesQuery = useMessages(user.id)
+  const sendMutation = useSendMessage(user.id)
+  const logoutMutation = useLogout()
+  const messages = messagesQuery.data ?? []
   const [text, setText] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const loading = messagesQuery.isPending
+  const busy = sendMutation.isPending || logoutMutation.isPending
+  const displayedError = error || messagesQuery.error?.message
 
-  function handleError(err) {
-    if (err.status === 401) onSignedOut()
-    else setError(err.message)
-  }
-
-  async function loadMessages() {
-    setLoading(true)
+  function loadMessages() {
     setError('')
-    try {
-      setMessages(await getMessages())
-    } catch (err) {
-      handleError(err)
-    } finally {
-      setLoading(false)
-    }
+    void messagesQuery.refetch()
   }
-
-  useEffect(() => {
-    let active = true
-    getMessages().then((data) => {
-      if (active) setMessages(data)
-    }).catch((err) => {
-      if (!active) return
-      if (err.status === 401) onSignedOut()
-      else setError(err.message)
-    }).finally(() => {
-      if (active) setLoading(false)
-    })
-    return () => { active = false }
-  }, [onSignedOut])
 
   async function submitMessage(event) {
     event.preventDefault()
@@ -165,29 +147,21 @@ function Workspace({ user, onSignedOut }) {
       setError('Escreva uma mensagem antes de enviar.')
       return
     }
-    setBusy(true)
     setError('')
     try {
-      await sendMessage(text.trim())
+      await sendMutation.mutateAsync(text.trim())
       setText('')
-      await loadMessages()
     } catch (err) {
-      handleError(err)
-    } finally {
-      setBusy(false)
+      setError(err.message)
     }
   }
 
   async function signOut() {
-    setBusy(true)
     setError('')
     try {
-      await logout()
-      onSignedOut()
+      await logoutMutation.mutateAsync()
     } catch (err) {
-      handleError(err)
-    } finally {
-      setBusy(false)
+      setError(err.message)
     }
   }
 
@@ -197,45 +171,21 @@ function Workspace({ user, onSignedOut }) {
       <div className="workspace-banner"><span className="welcome-icon"><Icon name="shield" size={24} /></span><div><h2>Você está no seu espaço de negócios.</h2><p>Acesso autenticado. Ideias prontas para ganhar vida.</p></div><span className="connected-badge"><span className="status-dot" /> Conectado</span></div>
       <section className="messages-card"><div className="messages-heading"><div><h2>Mural de conexões</h2><p>Compartilhe uma ideia com o workspace.</p></div><Icon name="mail" size={24} /></div>
         <form className="message-form" onSubmit={submitMessage}><label htmlFor="message">Sua mensagem</label><textarea id="message" value={text} onChange={(event) => setText(event.target.value)} placeholder="O que vamos construir hoje?" required maxLength={2000} disabled={busy} /><button className="primary-button" disabled={busy || !text.trim()}>{busy ? 'Aguarde...' : 'Publicar mensagem'}<Icon name="arrow" size={18} /></button></form>
-        {error && <div className="alert alert-error" role="alert">{error} <button type="button" className="inline-button" onClick={loadMessages} disabled={busy || loading}>Tentar novamente</button></div>}
-        <div aria-live="polite">{loading ? <p className="empty-state">Carregando mensagens...</p> : messages.length === 0 ? <p className="empty-state">O próximo assunto pode começar com você. Publique a primeira mensagem.</p> : <ul className="message-list">{messages.map((message) => <li key={message.id}><p>{message.texto}</p>{message.criadaEm && <time dateTime={message.criadaEm}>{new Date(message.criadaEm).toLocaleString('pt-BR')}</time>}</li>)}</ul>}</div>
+        {displayedError && <div className="alert alert-error" role="alert">{displayedError} <button type="button" className="inline-button" onClick={loadMessages} disabled={busy || messagesQuery.isFetching}>Tentar novamente</button></div>}
+        <div aria-live="polite">{loading ? <p className="empty-state">Carregando mensagens...</p> : messagesQuery.isError && messagesQuery.data === undefined ? null : messages.length === 0 ? <p className="empty-state">O próximo assunto pode começar com você. Publique a primeira mensagem.</p> : <ul className="message-list">{messages.map((message) => <li key={message.id}><p>{message.texto}</p>{message.criadaEm && <time dateTime={message.criadaEm}>{new Date(message.criadaEm).toLocaleString('pt-BR')}</time>}</li>)}</ul>}</div>
       </section>
     </section>
   </main>
 }
 
 function App() {
-  const [user, setUser] = useState(null)
-  const [checking, setChecking] = useState(true)
-  const [error, setError] = useState('')
+  const session = useSession()
+  const user = session.data
+  const checking = session.isPending || (session.isError && session.isFetching)
 
-  async function restoreSession() {
-    setChecking(true)
-    setError('')
-    try {
-      setUser(await getCurrentUser())
-    } catch (err) {
-      if (err.status !== 401) setError(err.message)
-    } finally {
-      setChecking(false)
-    }
-  }
-
-  useEffect(() => {
-    let active = true
-    getCurrentUser().then((account) => {
-      if (active) setUser(account)
-    }).catch((err) => {
-      if (active && err.status !== 401) setError(err.message)
-    }).finally(() => {
-      if (active) setChecking(false)
-    })
-    return () => { active = false }
-  }, [])
-
-  if (checking || error) return <main className="startup-screen"><Brand />{checking ? <p role="status"><span className="spinner" /> Preparando seu workspace...</p> : <><div className="alert alert-error" role="alert">{error}</div><button className="primary-button" onClick={restoreSession}>Tentar novamente <Icon name="arrow" /></button></>}</main>
-  if (user) return <Workspace user={user} onSignedOut={() => setUser(null)} />
-  return <main className="login-layout"><BusinessPanel /><AuthForm onAuthenticated={setUser} /></main>
+  if (checking || session.isError) return <main className="startup-screen"><Brand />{checking ? <p role="status"><span className="spinner" /> Preparando seu workspace...</p> : <><div className="alert alert-error" role="alert">{session.error.message}</div><button className="primary-button" onClick={() => session.refetch()}>Tentar novamente <Icon name="arrow" /></button></>}</main>
+  if (user) return <Workspace key={user.id} user={user} />
+  return <main className="login-layout"><BusinessPanel /><AuthForm /></main>
 }
 
 export default App
