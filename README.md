@@ -2,7 +2,7 @@
 
 Workspace corporativo em React + Vite: login responsivo, cadastro, visualizacao
 de senha, restauracao de sessao, mural autenticado, seletor de lojas,
-catalogo e estoque por loja e logout.
+catalogo, estoque, pedidos internos por loja e logout.
 
 ## Desenvolvimento
 
@@ -88,7 +88,36 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
   iniciar outra operacao; o servidor pode ter confirmado mesmo sem resposta.
 - O historico mostra entrada/saida, saldo apos, motivo, data local e IDs do
   responsavel e da operacao. Nao e editavel. Novas movimentacoes podem deslocar
-  paginas do historico. Ainda nao existem reservas, transferencias ou baixa por venda.
+  paginas do historico. Ainda nao existem reservas ou transferencias; a etapa 4
+  baixa estoque na confirmacao de pedido interno, nao no pagamento.
+
+## Etapa 4 - pedidos internos
+
+- OWNER/MANAGER usam **Adicionar ao pedido** no catalogo, inclusive em paginas
+  diferentes, e ajustam as quantidades no painel de pedidos. Limite de 50
+  produtos distintos, quantidades inteiras de 1 a 2147483647.
+- **Salvar rascunho do pedido** consulta os precos no backend e guarda os
+  valores usados. A interface nao envia precos nem calcula totais em ponto
+  flutuante. Campos monetarios recebidos como strings sao formatados sem
+  conversao para Number, inclusive totais grandes.
+- O pedido salvo mostra nome/SKU, quantidade, preco unitario, subtotal e total.
+  Nao e editavel; nao reserva estoque. A lista e o detalhe ficam em
+  **Pedidos da loja**; STAFF somente consulta.
+- **Confirmar pedido** mostra um segundo passo explicito. **Confirmar e baixar
+  estoque** baixa todos os itens ou nenhum; falta de saldo mantem o pedido em
+  rascunho e permite tentar novamente. Confirmado nao significa pago.
+- Sem pagamento, frete, cliente, cancelamento ou devolucao automatica.
+  Valide com produtos de teste; nao confirme uma venda real que dependa desses fluxos.
+- Hooks em `src/features/orders/queries.js` isolam lista, detalhe, carrinho e
+  criacao pendente por conta/loja. Carrinho e operacoes incertas persistem em
+  memoria ao trocar de loja, mas somem no logout, expiracao ou reload.
+- Criacao e estoque compartilham `src/useIdempotentOperation.js`: resposta
+  perdida conserva requestId/corpo para reenvio manual, sem POST automatico.
+  Confira a lista antes de criar outro pedido se ja recarregou apos falha.
+  Confirmacao usa o ID do pedido salvo e pode ser repetida sem nova baixa,
+  inclusive depois de reload; primeiro consulte seu estado.
+- Sucesso na confirmacao atualiza o pedido e invalida apenas os saldos/historicos
+  dos produtos envolvidos na mesma conta/loja. O mural continua global.
 
 ## Validacao
 
@@ -105,14 +134,14 @@ em localhost:8081 e MongoDB/PostgreSQL de **testes**, sem dados reais. Eles cria
 Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, mural,
 logout e viewport movel. Nao rode contra producao.
 
-Os testes `query-*.spec.js`, `catalog.spec.js` e `inventory.spec.js` validam a integracao do React Query no navegador
+Os testes `query-*.spec.js`, `catalog.spec.js`, `inventory.spec.js` e `orders.spec.js` validam a integracao do React Query no navegador
 com API interceptada: sessao, CSRF, invalidacao do mural, retries, erros e
 isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
-cadastro, estoque/historico, resposta perdida com reenvio idempotente e layout
+cadastro, estoque/historico, pedidos, resposta perdida com reenvio idempotente e layout
 movel. Nao exigem backend:
 
 ```bash
-npm test -- e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
+npm test -- e2e/orders.spec.js e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
 ```
 
 Esses testes nao substituem os testes HTTP do backend com bancos reais nem
@@ -168,3 +197,12 @@ dos produtos antes deste frontend. Nao ha novas variaveis ou configuracao nginx.
 Valide entrada de 10, saida de 3 (saldo 7), bloqueio de saida de 8, historico,
 consulta como STAFF e isolamento entre lojas. Para rollback, frontend anterior
 primeiro, depois backend, sem apagar tabelas nem historico.
+
+### Pedidos internos - etapa 4
+
+Publique o backend com migracao V4 e confirme saude/preservacao dos saldos
+antes do frontend. Nao ha novas variaveis ou mudancas no proxy.
+Valide rascunho sem baixa, valores preservados, confirmacao com baixa unica,
+falta de saldo sem baixa parcial, leitura como STAFF e isolamento por loja.
+Rollback preserva pedidos e baixas ja confirmadas: frontend anterior primeiro,
+backend depois, sem apagar tabelas ou desfazer movimentos no banco.

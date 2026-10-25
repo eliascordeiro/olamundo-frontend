@@ -74,3 +74,12 @@ export const getStockHistory = (storeId, productId, { page = 0, size = 20, signa
   request(`${stockPath(storeId, productId)}/movements?page=${page}&size=${size}`, { signal })
 export const moveStock = (storeId, productId, movement) =>
   post(`${stockPath(storeId, productId)}/movements`, movement)
+
+const ordersPath = (storeId) => `/api/stores/${encodeURIComponent(storeId)}/orders`
+export const getOrders = (storeId, { page = 0, size = 20, signal } = {}) =>
+  request(`${ordersPath(storeId)}?page=${page}&size=${size}`, { signal })
+export const getOrder = (storeId, orderId, { signal } = {}) =>
+  request(`${ordersPath(storeId)}/${encodeURIComponent(orderId)}`, { signal })
+export const createOrder = (storeId, order) => post(ordersPath(storeId), order)
+export const confirmOrder = (storeId, orderId) =>
+  post(`${ordersPath(storeId)}/${encodeURIComponent(orderId)}/confirm`, {})

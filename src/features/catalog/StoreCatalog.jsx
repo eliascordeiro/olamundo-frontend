@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useCreateProduct, useProducts, useStore, useStores } from './queries'
 import StockPanel from '../inventory/StockPanel'
 import QueryError from '../../components/QueryError'
+import OrdersPanel from '../orders/OrdersPanel'
+import { useCreateOrder, useOrderDraft } from '../orders/queries'
 import './catalog.css'
 
 const roleNames = { OWNER: 'Proprietário', MANAGER: 'Gerente', STAFF: 'Colaborador' }
@@ -70,8 +72,26 @@ function ProductForm({ userId, storeId }) {
 function ProductCatalog({ userId, store }) {
   const [page, setPage] = useState(0)
   const [stockProduct, setStockProduct] = useState(null)
+  const [showOrders, setShowOrders] = useState(false)
+  const [orderError, setOrderError] = useState('')
+  const draft = useOrderDraft(userId, store.id)
+  const creation = useCreateOrder(userId, store.id)
   const products = useProducts(userId, store.id, page)
   const canCreate = store.role === 'OWNER' || store.role === 'MANAGER'
+
+  function addToOrder(product) {
+    setOrderError('')
+    if (draft.items.some(item => item.productId === product.id)) {
+      setShowOrders(true)
+      return
+    }
+    if (draft.items.length >= 50) {
+      setOrderError('O pedido aceita no máximo 50 produtos distintos.')
+      return
+    }
+    draft.setItems(previous => [...previous, { productId: product.id, name: product.name, sku: product.sku, quantity: '1' }])
+    setShowOrders(true)
+  }
 
   return <section className="product-catalog" aria-label={`Catálogo de ${store.name}`}>
     <div className="catalog-heading">
@@ -91,9 +111,18 @@ function ProductCatalog({ userId, store }) {
                 {product.description && <p>{product.description}</p>}</div>
               <div className="product-actions"><strong>{money.format(product.price)}</strong>
                 <button type="button" className="secondary-button" aria-label={`Ver estoque de ${product.name}`}
-                  onClick={() => setStockProduct(product)}>Estoque</button></div>
+                  onClick={() => setStockProduct(product)}>Estoque</button>
+                {canCreate && <button type="button" className="secondary-button"
+                  aria-label={`Adicionar ${product.name} ao pedido`}
+                  disabled={creation.sending || Boolean(creation.pendingOperation)}
+                  onClick={() => addToOrder(product)}>Adicionar ao pedido</button>}</div>
             </li>)}</ul>}
     {stockProduct && <StockPanel key={stockProduct.id} userId={userId} store={store} product={stockProduct} />}
+    {orderError && <div className="alert alert-error" role="alert">{orderError}</div>}
+    <button type="button" className="secondary-button" onClick={() => setShowOrders(value => !value)}>
+      {showOrders ? 'Ocultar pedidos' : 'Pedidos da loja'}
+    </button>
+    {showOrders && <OrdersPanel userId={userId} store={store} draft={draft} creation={creation} />}
     <nav className="catalog-pagination" aria-label="Páginas do catálogo">
       <button type="button" className="secondary-button" disabled={page === 0 || products.isFetching}
         onClick={() => setPage((current) => current - 1)}>Página anterior</button>

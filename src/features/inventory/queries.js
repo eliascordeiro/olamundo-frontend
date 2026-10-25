@@ -1,6 +1,7 @@
-import { skipToken, useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getStock, getStockHistory, moveStock } from '../../api'
 import { sessionKey } from '../../queries'
+import useIdempotentOperation from '../../useIdempotentOperation'
 
 const stockKey = (userId, storeId, productId) => ['stock', userId, storeId, productId]
 const operationKey = (userId, storeId, productId) => ['stock-operation', userId, storeId, productId]
@@ -31,41 +32,11 @@ export function useStockHistory(userId, storeId, productId, page) {
 
 export function useStockMovement(userId, storeId, productId) {
   const client = useQueryClient()
-  const key = operationKey(userId, storeId, productId)
-  const operation = useQuery({
-    queryKey: key,
-    queryFn: skipToken,
-    initialData: null,
-    enabled: false,
-    gcTime: Infinity,
-  })
-  const mutationKey = ['move-stock', userId, storeId, productId]
-  const sending = useIsMutating({ mutationKey }) > 0
-  const mutation = useMutation({
-    mutationKey,
+  return useIdempotentOperation({
+    userId,
+    operationKey: operationKey(userId, storeId, productId),
+    mutationKey: ['move-stock', userId, storeId, productId],
     mutationFn: (movement) => moveStock(storeId, productId, movement),
-    onSuccess: async (_result, payload) => {
-      if (!currentUser(client, userId)) return
-      if (client.getQueryData(key)?.requestId === payload.requestId) client.setQueryData(key, null)
-      await client.invalidateQueries({ queryKey: stockKey(userId, storeId, productId) })
-    },
-    onError: (error, payload) => {
-      if (currentUser(client, userId) && client.getQueryData(key)?.requestId === payload.requestId
-        && error.status >= 400 && error.status < 500 && error.status !== 408) {
-        client.setQueryData(key, null)
-      }
-    },
+    onSuccess: () => client.invalidateQueries({ queryKey: stockKey(userId, storeId, productId) }),
   })
-
-  return {
-    pendingOperation: operation.data,
-    sending,
-    submit: (draft) => {
-      const pending = client.getQueryData(key)
-      const payload = pending ?? { ...draft, requestId: crypto.randomUUID() }
-      // Keep uncertain requests across panel/store switches; logout clears all private queries.
-      client.setQueryData(key, payload)
-      return mutation.mutateAsync(payload)
-    },
-  }
 }

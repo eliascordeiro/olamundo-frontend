@@ -26,6 +26,14 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
     moveStockStatus: 200,
     dropNextStockResponse: false,
     holdStock: {},
+    orders: {},
+    ordersStatus: {},
+    orderStatus: {},
+    createOrderStatus: 200,
+    confirmOrderStatus: 200,
+    dropNextOrderResponse: false,
+    dropNextConfirmResponse: false,
+    holdOrders: {},
   }
   await page.route('**/api/**', async (route) => {
     const request = route.request()
@@ -55,6 +63,80 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
       return state.storesStatus === 200
         ? respond(200, slice(state.stores))
         : respond(state.storesStatus, { message: 'Falha ao carregar lojas.' })
+    }
+    const orderRoute = path.match(/^\/api\/stores\/([^/]+)\/orders(?:\/([^/]+)(\/confirm)?)?$/)
+    if (orderRoute) {
+      const [, storeId, orderId, confirming] = orderRoute
+      const store = state.stores.find(item => item.id === storeId)
+      if (!store || state.storeStatus[storeId]) return respond(404, { message: 'Loja nao encontrada.' })
+      state.orders[storeId] ??= []
+      const orders = state.orders[storeId]
+      const order = orders.find(item => item.summary.id === orderId)
+      if (method === 'GET') {
+        if (orderId) {
+          if (state.orderStatus[orderId]) return respond(state.orderStatus[orderId], { message: 'Falha ao consultar pedido.' })
+          return order ? respond(200, order) : respond(404, { message: 'Pedido nao encontrado.' })
+        }
+        if (state.ordersStatus[storeId]) return respond(state.ordersStatus[storeId], { message: 'Falha ao listar pedidos.' })
+        const snapshot = slice(orders.map(item => item.summary))
+        if (state.holdOrders[storeId]) await state.holdOrders[storeId]
+        return respond(200, snapshot)
+      }
+      if (method === 'POST') {
+        if (request.headers()['x-csrf-token'] !== 'test-csrf') return respond(403, { message: 'CSRF ausente.' })
+        if (!['OWNER', 'MANAGER'].includes(store.role)) return respond(403, { message: 'Acesso negado.' })
+        if (!orderId) {
+          if (state.createOrderStatus !== 200) return respond(state.createOrderStatus, { message: 'Criacao de pedido recusada.' })
+          const body = request.postDataJSON()
+          const previous = orders.find(item => item.summary.id === body.requestId)
+          if (previous) return respond(200, previous)
+          const decimal = cents => `${cents / 100n}.${(cents % 100n).toString().padStart(2, '0')}`
+          const items = body.items.map(item => {
+            const product = state.products[storeId].find(product => product.id === item.productId)
+            const price = String(product.price).split('.')
+            const cents = BigInt(price[0]) * 100n + BigInt((price[1] ?? '').padEnd(2, '0'))
+            return { productId: product.id, productName: product.name, sku: product.sku,
+              quantity: Number(item.quantity), unitPrice: decimal(cents),
+              lineTotal: decimal(cents * BigInt(item.quantity)) }
+          })
+          const cents = items.reduce((sum, item) => sum + BigInt(item.lineTotal.replace('.', '')), 0n)
+          const saved = { summary: { id: body.requestId, storeId, status: 'DRAFT', currency: 'BRL',
+            total: decimal(cents), createdBy: state.user.id, createdAt: new Date().toISOString(),
+            confirmedAt: null, confirmedBy: null }, items }
+          orders.unshift(saved)
+          if (state.dropNextOrderResponse) {
+            state.dropNextOrderResponse = false
+            return route.abort('failed')
+          }
+          return respond(200, saved)
+        }
+        if (confirming) {
+          if (!order) return respond(404, { message: 'Pedido nao encontrado.' })
+          if (state.confirmOrderStatus !== 200) return respond(state.confirmOrderStatus, { message: 'Confirmacao recusada.' })
+          if (order.summary.status !== 'CONFIRMED') {
+            if (order.items.some(item => (state.stock[`${storeId}/${item.productId}`] ?? 0) < item.quantity)) {
+              return respond(409, { message: 'Saldo insuficiente para esta saida.' })
+            }
+            for (const item of order.items) {
+              const key = `${storeId}/${item.productId}`
+              state.stock[key] -= item.quantity
+              state.stockHistory[key] ??= []
+              state.stockHistory[key].unshift({ id: crypto.randomUUID(), storeId, productId: item.productId,
+                type: 'OUT', quantity: item.quantity, balanceAfter: state.stock[key],
+                reason: `Confirmacao do pedido ${orderId}`, userId: state.user.id,
+                createdAt: new Date().toISOString() })
+            }
+            order.summary.status = 'CONFIRMED'
+            order.summary.confirmedAt = new Date().toISOString()
+            order.summary.confirmedBy = state.user.id
+          }
+          if (state.dropNextConfirmResponse) {
+            state.dropNextConfirmResponse = false
+            return route.abort('failed')
+          }
+          return respond(200, order)
+        }
+      }
     }
     const stockRoute = path.match(/^\/api\/stores\/([^/]+)\/products\/([^/]+)\/stock(\/movements)?$/)
     if (stockRoute) {
