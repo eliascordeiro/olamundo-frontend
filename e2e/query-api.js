@@ -19,6 +19,13 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
     productStatus: {},
     createProductStatus: 201,
     holdProducts: {},
+    stock: {},
+    stockHistory: {},
+    stockStatus: {},
+    stockHistoryStatus: {},
+    moveStockStatus: 200,
+    dropNextStockResponse: false,
+    holdStock: {},
   }
   await page.route('**/api/**', async (route) => {
     const request = route.request()
@@ -48,6 +55,43 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
       return state.storesStatus === 200
         ? respond(200, slice(state.stores))
         : respond(state.storesStatus, { message: 'Falha ao carregar lojas.' })
+    }
+    const stockRoute = path.match(/^\/api\/stores\/([^/]+)\/products\/([^/]+)\/stock(\/movements)?$/)
+    if (stockRoute) {
+      const [, storeId, productId, isHistory] = stockRoute
+      const key = `${storeId}/${productId}`
+      const store = state.stores.find((item) => item.id === storeId)
+      const product = state.products[storeId]?.find((item) => item.id === productId)
+      if (!store || !product || state.storeStatus[storeId]) return respond(404, { message: 'Produto nao encontrado.' })
+      if (method === 'GET') {
+        const status = isHistory ? state.stockHistoryStatus[key] : state.stockStatus[key]
+        if (status) return respond(status, { message: 'Falha ao consultar estoque.' })
+        const snapshot = isHistory ? slice(state.stockHistory[key] ?? [])
+          : { storeId, productId, quantity: state.stock[key] ?? 0 }
+        if (state.holdStock[key]) await state.holdStock[key]
+        return respond(200, snapshot)
+      }
+      if (method === 'POST' && isHistory) {
+        if (request.headers()['x-csrf-token'] !== 'test-csrf') return respond(403, { message: 'CSRF ausente.' })
+        if (!['OWNER', 'MANAGER'].includes(store.role)) return respond(403, { message: 'Acesso negado.' })
+        if (state.moveStockStatus !== 200) return respond(state.moveStockStatus, { message: 'Movimentacao recusada.' })
+        const body = request.postDataJSON()
+        state.stockHistory[key] ??= []
+        const existing = state.stockHistory[key].find((item) => item.id === body.requestId)
+        if (existing) return respond(200, existing)
+        const next = (state.stock[key] ?? 0) + (body.type === 'IN' ? 1 : -1) * Number(body.quantity)
+        if (next < 0) return respond(409, { message: 'Saldo insuficiente.' })
+        const movement = { ...body, id: body.requestId, storeId, productId,
+          quantity: Number(body.quantity), balanceAfter: next, userId: state.user.id,
+          sequence: state.stockHistory[key].length + 1, createdAt: new Date().toISOString() }
+        state.stock[key] = next
+        state.stockHistory[key].unshift(movement)
+        if (state.dropNextStockResponse) {
+          state.dropNextStockResponse = false
+          return route.abort('failed')
+        }
+        return respond(200, movement)
+      }
     }
     const storeRoute = path.match(/^\/api\/stores\/([^/]+)(\/products)?$/)
     if (storeRoute) {

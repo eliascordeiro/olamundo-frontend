@@ -1,18 +1,12 @@
 import { useState } from 'react'
 import { useCreateProduct, useProducts, useStore, useStores } from './queries'
+import StockPanel from '../inventory/StockPanel'
+import QueryError from '../../components/QueryError'
 import './catalog.css'
 
 const roleNames = { OWNER: 'Proprietário', MANAGER: 'Gerente', STAFF: 'Colaborador' }
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 const emptyProduct = { name: '', sku: '', description: '', price: '' }
-
-function QueryError({ query, label }) {
-  return <div className="alert alert-error" role="alert">
-    {label}: {query.error.message}{' '}
-    <button type="button" className="inline-button" disabled={query.isFetching}
-      onClick={() => query.refetch()}>Tentar novamente</button>
-  </div>
-}
 
 function ProductForm({ userId, storeId }) {
   const mutation = useCreateProduct(userId, storeId)
@@ -62,7 +56,7 @@ function ProductForm({ userId, storeId }) {
         <label>Preço (R$)<input required inputMode="decimal" maxLength={13} placeholder="Ex.: 19,90"
           aria-describedby="price-help" {...field('price')} /></label>
       </div>
-      <p id="price-help" className="catalog-hint">Valores em reais, com até duas casas decimais. Não inclui estoque ou cobrança.</p>
+      <p id="price-help" className="catalog-hint">Valores em reais, com até duas casas decimais. Estoque é movimentado separadamente; sem cobrança.</p>
       <label>Descrição<textarea maxLength={2000} rows={3} {...field('description')} /></label>
       {error && <div className="alert alert-error" role="alert">{error}</div>}
       {notice && <div className="alert alert-success" role="status">{notice}</div>}
@@ -75,6 +69,7 @@ function ProductForm({ userId, storeId }) {
 
 function ProductCatalog({ userId, store }) {
   const [page, setPage] = useState(0)
+  const [stockProduct, setStockProduct] = useState(null)
   const products = useProducts(userId, store.id, page)
   const canCreate = store.role === 'OWNER' || store.role === 'MANAGER'
 
@@ -94,8 +89,11 @@ function ProductCatalog({ userId, store }) {
             <li key={product.id}>
               <div><h3>{product.name}</h3><span className="catalog-hint">SKU: {product.sku}</span>
                 {product.description && <p>{product.description}</p>}</div>
-              <strong>{money.format(product.price)}</strong>
+              <div className="product-actions"><strong>{money.format(product.price)}</strong>
+                <button type="button" className="secondary-button" aria-label={`Ver estoque de ${product.name}`}
+                  onClick={() => setStockProduct(product)}>Estoque</button></div>
             </li>)}</ul>}
+    {stockProduct && <StockPanel key={stockProduct.id} userId={userId} store={store} product={stockProduct} />}
     <nav className="catalog-pagination" aria-label="Páginas do catálogo">
       <button type="button" className="secondary-button" disabled={page === 0 || products.isFetching}
         onClick={() => setPage((current) => current - 1)}>Página anterior</button>

@@ -2,7 +2,7 @@
 
 Workspace corporativo em React + Vite: login responsivo, cadastro, visualizacao
 de senha, restauracao de sessao, mural autenticado, seletor de lojas,
-catalogo por loja e logout.
+catalogo e estoque por loja e logout.
 
 ## Desenvolvimento
 
@@ -32,7 +32,7 @@ O mural preserva as mensagens existentes e e compartilhado pelos usuarios.
 
 ## Dados remotos com React Query
 
-TanStack Query gerencia a sessao, o mural, as lojas e os produtos; formularios e senhas continuam
+TanStack Query gerencia a sessao, o mural, as lojas, os produtos e o estoque; formularios e senhas continuam
 no estado local dos componentes. Os hooks ficam em `src/queries.js`, sobre
 a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
@@ -64,7 +64,31 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
   O mural existente permanece global, nao e um canal privado da loja.
 
 Criacao de lojas e inclusao de membros continuam pela API/Swagger. Ainda nao
-existem telas para estoque, imagens, edicao/exclusao de produtos ou checkout.
+existem telas para imagens, edicao/exclusao de produtos ou checkout.
+
+## Etapa 3 - estoque
+
+- **Estoque** em cada produto abre saldo e historico paginado (20 por pagina).
+  Consultas sao feitas somente para o produto selecionado, sem uma requisicao
+  por item da listagem. OWNER/MANAGER registram; STAFF apenas consulta.
+- Quantidades inteiras, de 1 a 2147483647; saldo inicial zero. Entrada e saida
+  exigem motivo. Nenhuma quantidade e presumida para os produtos existentes.
+- Os hooks de `src/features/inventory/queries.js` isolam saldo e historico por
+  usuario, loja e produto; pagina tambem integra a chave do historico.
+  Confirmacao invalida somente o estoque desse produto.
+- Cada operacao recebe requestId UUID. Falha de rede/timeout/5xx conserva
+  identificador e dados em memoria, inclusive ao trocar de produto ou loja.
+  **Confirmar mesmo envio** reenvia a mesma operacao, sem duplicar o saldo.
+  Os campos ficam bloqueados enquanto o resultado for incerto.
+- Nao ha retry automatico de POST. Rejeicoes definitivas (por exemplo, saldo
+  insuficiente) preservam o rascunho e liberam correcao para uma nova tentativa.
+  Logout e expiracao removem operacoes pendentes e dados privados do cache.
+- Como o cache nao e persistido, reload/fechamento da aba perde o requestId
+  pendente. Se houve erro de conexao, confira o historico antes de recarregar ou
+  iniciar outra operacao; o servidor pode ter confirmado mesmo sem resposta.
+- O historico mostra entrada/saida, saldo apos, motivo, data local e IDs do
+  responsavel e da operacao. Nao e editavel. Novas movimentacoes podem deslocar
+  paginas do historico. Ainda nao existem reservas, transferencias ou baixa por venda.
 
 ## Validacao
 
@@ -81,13 +105,14 @@ em localhost:8081 e MongoDB/PostgreSQL de **testes**, sem dados reais. Eles cria
 Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, mural,
 logout e viewport movel. Nao rode contra producao.
 
-Os testes `query-*.spec.js` e `catalog.spec.js` validam a integracao do React Query no navegador
+Os testes `query-*.spec.js`, `catalog.spec.js` e `inventory.spec.js` validam a integracao do React Query no navegador
 com API interceptada: sessao, CSRF, invalidacao do mural, retries, erros e
 isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
-cadastro e layout movel. Nao exigem backend:
+cadastro, estoque/historico, resposta perdida com reenvio idempotente e layout
+movel. Nao exigem backend:
 
 ```bash
-npm test -- e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
+npm test -- e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
 ```
 
 Esses testes nao substituem os testes HTTP do backend com bancos reais nem
@@ -135,3 +160,11 @@ frontend anterior antes de reverter o backend, sem apagar tabelas do banco.
 
 O nginx aplica CSP, bloqueio de frames e protecao contra MIME sniffing.
 OAuth, recuperacao de senha e MFA nao sao simulados na interface.
+
+### Estoque multiloja - etapa 3
+
+Publique primeiro o backend com migracao V3, confirme healthcheck e preservacao
+dos produtos antes deste frontend. Nao ha novas variaveis ou configuracao nginx.
+Valide entrada de 10, saida de 3 (saldo 7), bloqueio de saida de 8, historico,
+consulta como STAFF e isolamento entre lojas. Para rollback, frontend anterior
+primeiro, depois backend, sem apagar tabelas nem historico.

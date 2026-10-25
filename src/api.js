@@ -65,3 +65,12 @@ export const getProducts = (storeId, { page = 0, size = 20, signal } = {}) =>
   request(`/api/stores/${encodeURIComponent(storeId)}/products?page=${page}&size=${size}`, { signal })
 export const createProduct = (storeId, product) =>
   post(`/api/stores/${encodeURIComponent(storeId)}/products`, product)
+
+const stockPath = (storeId, productId) =>
+  `/api/stores/${encodeURIComponent(storeId)}/products/${encodeURIComponent(productId)}/stock`
+export const getStock = (storeId, productId, { signal } = {}) =>
+  request(stockPath(storeId, productId), { signal })
+export const getStockHistory = (storeId, productId, { page = 0, size = 20, signal } = {}) =>
+  request(`${stockPath(storeId, productId)}/movements?page=${page}&size=${size}`, { signal })
+export const moveStock = (storeId, productId, movement) =>
+  post(`${stockPath(storeId, productId)}/movements`, movement)
