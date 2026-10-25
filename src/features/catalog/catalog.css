@@ -1,0 +1,36 @@
+.store-catalog { margin: 28px 0; padding: 26px; border: 1px solid #dfe7df; border-radius: 16px; background: #fff; }
+.catalog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.catalog-heading h2 { font-size: 20px; letter-spacing: -.4px; }
+.catalog-heading p { margin-top: 8px; color: #64766a; font-size: 13px; }
+.store-select, .product-form label { display: block; color: #34463e; font-size: 12px; font-weight: 600; }
+.store-select select, .product-form input, .product-form textarea { display: block; width: 100%; min-width: 0; margin-top: 8px; border: 1px solid #dce3dd; border-radius: 8px; padding: 12px; background: #fff; color: #203d31; font: inherit; }
+.store-select select { max-width: 560px; }
+.store-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 12px 0 24px; }
+.store-role { border-radius: 6px; background: #edf3ee; padding: 8px 12px; font-size: 12px; white-space: nowrap; }
+.product-catalog { border-top: 1px solid #e1e9e2; padding-top: 24px; }
+.product-form { margin: 20px 0; padding: 20px; border-radius: 12px; background: #f7faf6; }
+.product-form h3 { margin-bottom: 16px; font-size: 16px; }
+.product-form fieldset { border: 0; padding: 0; min-width: 0; }
+.product-fields { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; }
+.product-fields > label { min-width: 0; }
+.product-form textarea { resize: vertical; }
+.product-form .primary-button { margin-top: 16px; }
+.product-form .alert { margin: 16px 0 0; }
+.catalog-hint { color: #64766a; font-size: 12px; font-weight: 400; line-height: 1.7; }
+p.catalog-hint { margin: 12px 0; }
+.product-list { list-style: none; padding: 0; margin: 24px 0; }
+.product-list li { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 18px 0; border-bottom: 1px solid #e1e9e2; }
+.product-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.product-list h3 { font-size: 15px; margin-bottom: 6px; }
+.product-list p { margin-top: 8px; font-size: 13px; white-space: pre-wrap; }
+.product-list strong { color: #194e3c; font-size: 15px; white-space: nowrap; }
+.catalog-pagination { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-top: 20px; font-size: 12px; }
+@media (max-width: 650px) {
+  .store-catalog { padding: 18px; }
+  .product-fields { grid-template-columns: 1fr; }
+  .product-form { padding: 14px; }
+  .catalog-heading { flex-wrap: wrap; }
+  .catalog-pagination { flex-wrap: wrap; gap: 10px; }
+  .catalog-pagination .secondary-button { padding: 10px; }
+  .product-list li { flex-direction: column; gap: 10px; }
+}

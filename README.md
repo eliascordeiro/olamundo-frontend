@@ -1,11 +1,13 @@
 # Nexo Business - Frontend
 
 Workspace corporativo em React + Vite: login responsivo, cadastro, visualizacao
-de senha, restauracao de sessao, mural autenticado e logout.
+de senha, restauracao de sessao, mural autenticado, seletor de lojas,
+catalogo por loja e logout.
 
 ## Desenvolvimento
 
-Inicie o backend na porta 8081 com o perfil `local` e MongoDB disponivel.
+Inicie o backend na porta 8081 com o perfil `local`, MongoDB e PostgreSQL
+disponiveis. Siga o README do backend para exportar a configuracao local.
 
 ```bash
 npm ci
@@ -30,7 +32,7 @@ O mural preserva as mensagens existentes e e compartilhado pelos usuarios.
 
 ## Dados remotos com React Query
 
-TanStack Query gerencia a sessao e o mural; formularios e senhas continuam
+TanStack Query gerencia a sessao, o mural, as lojas e os produtos; formularios e senhas continuam
 no estado local dos componentes. Os hooks ficam em `src/queries.js`, sobre
 a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
@@ -44,6 +46,26 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 - O cache existe apenas em memoria, sem persistencia no navegador. Mutacoes
   de autenticacao sao resetadas apos a tentativa e descartadas quando inativas.
 
+## Etapa 2 - lojas e catalogo
+
+- O workspace lista as lojas da conta em paginas de 20, com **Carregar mais lojas**.
+  A selecao e explicita e nao e persistida entre reloads ou sessoes.
+- Cada loja tem catalogo paginado de 20 produtos. OWNER e MANAGER podem cadastrar;
+  STAFF apenas consulta. A autorizacao definitiva sempre e feita pelo backend.
+- O cadastro recebe nome, SKU, descricao opcional e preco em reais. Aceita virgula
+  ou ponto decimal, ate duas casas e sem separadores de milhar. Envia o preco
+  como texto decimal, sem calculos monetarios em ponto flutuante.
+- SKU e normalizado para maiusculas e deve ser unico apenas na loja selecionada.
+  Falhas de cadastro mantem os campos preenchidos, sem repetir POST automaticamente.
+- Hooks em `src/features/catalog/queries.js` isolam o cache por usuario, loja e
+  pagina. Criar produto invalida somente o catalogo da loja correspondente.
+  Trocar de loja desmonta o formulario e cancela consultas antigas.
+- Erros de consulta sao mostrados com tentativa manual, sem fingir uma lista vazia.
+  O mural existente permanece global, nao e um canal privado da loja.
+
+Criacao de lojas e inclusao de membros continuam pela API/Swagger. Ainda nao
+existem telas para estoque, imagens, edicao/exclusao de produtos ou checkout.
+
 ## Validacao
 
 ```bash
@@ -54,20 +76,22 @@ npm test
 ```
 
 Os testes E2E iniciam o Vite automaticamente, mas exigem backend real disponivel
-em localhost:8081 e MongoDB de **testes**, sem dados reais. Eles criam contas
+em localhost:8081 e MongoDB/PostgreSQL de **testes**, sem dados reais. Eles criam contas
 `nexo-e2e-...@example.com` e mensagens; descarte esse banco isolado ao terminar.
 Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, mural,
 logout e viewport movel. Nao rode contra producao.
 
-Os testes `query-*.spec.js` validam a integracao do React Query no navegador
+Os testes `query-*.spec.js` e `catalog.spec.js` validam a integracao do React Query no navegador
 com API interceptada: sessao, CSRF, invalidacao do mural, retries, erros e
-isolamento/cancelamento de consultas entre sessoes. Nao exigem backend:
+isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
+cadastro e layout movel. Nao exigem backend:
 
 ```bash
-npm test -- e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
+npm test -- e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
 ```
 
-Esses testes nao substituem os E2E com Spring Boot e MongoDB reais.
+Esses testes nao substituem os testes HTTP do backend com bancos reais nem
+a validacao manual da integracao completa no Railway.
 
 ## Producao / Railway
 
@@ -98,10 +122,16 @@ proxy `/api/` existente, sem mudar a infraestrutura do frontend. Quando o backen
 A documentacao usa a sessao existente; `/api/openapi` retorna a especificacao.
 Swagger fica desativado por padrao no backend e nunca dispensa CSRF ou permissoes.
 
-Esta etapa entrega lojas e vinculos na API, ainda sem telas comerciais. O
-workspace e o mural atuais nao mudam, e o mural continua compartilhado.
-Na proxima etapa, o seletor de lojas e as consultas de catalogo devem incluir
-`storeId` nas chaves de React Query, sem tratar a selecao visual como autorizacao.
+### Catalogo multiloja - etapa 2
+
+Publique primeiro o backend com as rotas de produtos e a migracao V2. Confirme
+healthcheck, preservacao das lojas e ausencia de erros de migracao antes de
+publicar este frontend. Nao sao necessarias novas variaveis de ambiente.
+
+Valide no Railway cadastro como OWNER/MANAGER, leitura como STAFF, repeticao de
+SKU na mesma loja e isolamento ao trocar de loja. Confira preco e persistencia
+apos reload, alem de logout/login e mural. Se precisar reverter, publique o
+frontend anterior antes de reverter o backend, sem apagar tabelas do banco.
 
 O nginx aplica CSP, bloqueio de frames e protecao contra MIME sniffing.
 OAuth, recuperacao de senha e MFA nao sao simulados na interface.

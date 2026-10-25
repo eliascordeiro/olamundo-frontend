@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useLogin, useLogout, useMessages, useRegister, useSendMessage, useSession } from './queries'
+import StoreCatalog from './features/catalog/StoreCatalog'
 import './App.css'
 
 function Icon({ name, size = 20, ...props }) {
@@ -169,6 +170,7 @@ function Workspace({ user }) {
     <header className="workspace-header"><Brand /><div className="account-menu"><span>{user.name}</span><button type="button" className="secondary-button" onClick={signOut} disabled={busy}><Icon name="exit" size={17} /> Sair</button></div></header>
     <section className="workspace-body"><span className="section-kicker">SEU WORKSPACE</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Boas conexões começam com uma conversa.</p>
       <div className="workspace-banner"><span className="welcome-icon"><Icon name="shield" size={24} /></span><div><h2>Você está no seu espaço de negócios.</h2><p>Acesso autenticado. Ideias prontas para ganhar vida.</p></div><span className="connected-badge"><span className="status-dot" /> Conectado</span></div>
+      <StoreCatalog userId={user.id} />
       <section className="messages-card"><div className="messages-heading"><div><h2>Mural de conexões</h2><p>Compartilhe uma ideia com o workspace.</p></div><Icon name="mail" size={24} /></div>
         <form className="message-form" onSubmit={submitMessage}><label htmlFor="message">Sua mensagem</label><textarea id="message" value={text} onChange={(event) => setText(event.target.value)} placeholder="O que vamos construir hoje?" required maxLength={2000} disabled={busy} /><button className="primary-button" disabled={busy || !text.trim()}>{busy ? 'Aguarde...' : 'Publicar mensagem'}<Icon name="arrow" size={18} /></button></form>
         {displayedError && <div className="alert alert-error" role="alert">{displayedError} <button type="button" className="inline-button" onClick={loadMessages} disabled={busy || messagesQuery.isFetching}>Tentar novamente</button></div>}

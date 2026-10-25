@@ -57,3 +57,11 @@ export const login = (email, password) => post('/api/auth/login', { email, passw
 export const register = (name, email, password) => post('/api/auth/register', { name, email, password })
 export const logout = () => post('/api/auth/logout')
 export const sendMessage = (texto) => post('/api/mensagens', { texto })
+export const getStores = ({ page = 0, size = 20, signal } = {}) =>
+  request(`/api/stores?page=${page}&size=${size}`, { signal })
+export const getStore = (storeId, { signal } = {}) =>
+  request(`/api/stores/${encodeURIComponent(storeId)}`, { signal })
+export const getProducts = (storeId, { page = 0, size = 20, signal } = {}) =>
+  request(`/api/stores/${encodeURIComponent(storeId)}/products?page=${page}&size=${size}`, { signal })
+export const createProduct = (storeId, product) =>
+  post(`/api/stores/${encodeURIComponent(storeId)}/products`, product)
