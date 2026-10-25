@@ -90,5 +90,18 @@ cookies sem Domain e os mantem na mesma origem. Use HTTPS publico e mantenha
 Configure tambem `CORS_ALLOWED_ORIGINS` no backend com a origem exata do
 frontend (incluindo protocolo); isso permite POSTs pelo proxy com Origin.
 
+### Fundacao multiloja - etapa 1
+
+O Swagger usa `/api/docs` e recursos em `/api/swagger-ui/`, encaminhados pelo
+proxy `/api/` existente, sem mudar a infraestrutura do frontend. Quando o backend habilitar
+`API_DOCS_ENABLED=true`, entre pelo frontend e abra `/api/docs` no mesmo dominio.
+A documentacao usa a sessao existente; `/api/openapi` retorna a especificacao.
+Swagger fica desativado por padrao no backend e nunca dispensa CSRF ou permissoes.
+
+Esta etapa entrega lojas e vinculos na API, ainda sem telas comerciais. O
+workspace e o mural atuais nao mudam, e o mural continua compartilhado.
+Na proxima etapa, o seletor de lojas e as consultas de catalogo devem incluir
+`storeId` nas chaves de React Query, sem tratar a selecao visual como autorizacao.
+
 O nginx aplica CSP, bloqueio de frames e protecao contra MIME sniffing.
 OAuth, recuperacao de senha e MFA nao sao simulados na interface.
