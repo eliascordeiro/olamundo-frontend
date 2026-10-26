@@ -45,7 +45,7 @@
 .auth-description { color: #7b8581; font-size: 12px; line-height: 1.8; margin-top: 12px; max-width: 330px; }
 .auth-form { margin-top: 30px; }
 .field-group { margin-bottom: 20px; }
-.field-group label, .message-form label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 9px; color: #34463e; }
+.field-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 9px; color: #34463e; }
 .input-wrap { display: flex; align-items: center; gap: 11px; border: 1px solid #dce3dd; border-radius: 8px; background: #fff; color: #91a096; padding: 0 14px; min-height: 49px; transition: border-color .2s, box-shadow .2s; }
 .input-wrap:focus-within { border-color: #6a9274; box-shadow: 0 0 0 3px #45755312; }
 .input-wrap input { border: 0; outline: 0; min-width: 0; width: 100%; font-size: 12px; background: transparent; color: #203d31; padding: 15px 0; }
@@ -85,21 +85,8 @@
 .workspace-banner p { color: #667b65; font-size: 12px; }
 .connected-badge { display: flex; align-items: center; gap: 7px; font-size: 10px; margin-left: auto; color: #4b664b; }
 .connected-badge .status-dot { background: #4e965d; }
-.messages-card { background: #fff; border: 1px solid #e1e8e1; border-radius: 12px; padding: 28px; }
-.messages-heading { display: flex; align-items: center; justify-content: space-between; color: #789079; }
-.messages-heading h2 { font-size: 19px; color: #284230; font-weight: 600; }
-.messages-heading p { font-size: 12px; color: #7b897d; margin-top: 8px; }
-.message-form { display: flex; flex-direction: column; align-items: flex-start; margin-top: 27px; gap: 10px; }
-.message-form label { margin: 0; }
-.message-form textarea { width: 100%; border: 1px solid #dce3dd; border-radius: 8px; resize: vertical; min-height: 95px; padding: 13px; font-size: 13px; color: #284230; }
-.message-form .primary-button { align-self: flex-end; }
-.messages-card > .alert { margin-top: 20px; }
 .empty-state { padding: 32px 10px; text-align: center; color: #829084; font-size: 12px; line-height: 1.8; }
-.message-list { list-style: none; padding: 0; margin: 24px 0 0; }
-.message-list li { border-top: 1px solid #edf1ec; padding: 18px 0; }
-.message-list p { font-size: 14px; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
-.message-list time { display: block; font-size: 10px; color: #8b998c; margin-top: 7px; }
 @media (min-width: 1500px) { .business-panel { padding-left: 15%; padding-right: 15%; } .auth-section { padding-left: 12%; padding-right: 12%; } }
 @media (max-width: 1050px) { .business-panel { padding-left: 9%; padding-right: 9%; } .auth-section { padding-left: 9%; padding-right: 9%; } .auth-top { justify-content: flex-end; font-size: 0; } .auth-top > span { font-size: 10px; } .panel-values { gap: 16px; font-size: 9px; } .preview-content strong { font-size: 16px; } .mini-chart { gap: 4px; } .mini-chart i { width: 8px; } .preview-bottom > span:last-child { display: none; } .auth-footer { font-size: 8px; } }
-@media (max-width: 760px) { .login-layout { display: block; } .business-panel { display: none; } .auth-section { min-height: 100svh; padding: 28px 7% 22px; } .mobile-brand { display: block; } .auth-top { margin-top: 20px; } .auth-card { padding: 38px 0; max-width: 420px; } .auth-card h2 { font-size: 30px; } .auth-description { font-size: 13px; } .auth-form { margin-top: 27px; } .input-wrap { min-height: 52px; } .input-wrap input { font-size: 16px; } .auth-footer { font-size: 9px; } .workspace-header { padding: 20px; } .account-menu > span { display: none; } .workspace-banner { align-items: flex-start; padding: 18px; gap: 12px; } .workspace-banner .welcome-icon, .connected-badge { display: none; } .workspace-body { padding: 25px 20px 40px; } .workspace-body h1 { font-size: 32px; } .messages-card { padding: 20px; } .message-form textarea { font-size: 16px; } }
+@media (max-width: 760px) { .login-layout { display: block; } .business-panel { display: none; } .auth-section { min-height: 100svh; padding: 28px 7% 22px; } .mobile-brand { display: block; } .auth-top { margin-top: 20px; } .auth-card { padding: 38px 0; max-width: 420px; } .auth-card h2 { font-size: 30px; } .auth-description { font-size: 13px; } .auth-form { margin-top: 27px; } .input-wrap { min-height: 52px; } .input-wrap input { font-size: 16px; } .auth-footer { font-size: 9px; } .workspace-header { padding: 20px; } .account-menu > span { display: none; } .workspace-banner { align-items: flex-start; padding: 18px; gap: 12px; } .workspace-banner .welcome-icon, .connected-badge { display: none; } .workspace-body { padding: 25px 20px 40px; } .workspace-body h1 { font-size: 32px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

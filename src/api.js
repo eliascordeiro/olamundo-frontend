@@ -42,7 +42,6 @@ async function request(path, options = {}) {
 }
 
 export const getCurrentUser = ({ signal } = {}) => request('/api/auth/me', { signal })
-export const getMessages = ({ signal } = {}) => request('/api/mensagens', { signal })
 
 async function post(path, body) {
   const { token } = await request('/api/auth/csrf')
@@ -56,7 +55,6 @@ async function post(path, body) {
 export const login = (email, password) => post('/api/auth/login', { email, password })
 export const register = (name, email, password) => post('/api/auth/register', { name, email, password })
 export const logout = () => post('/api/auth/logout')
-export const sendMessage = (texto) => post('/api/mensagens', { texto })
 export const getStores = ({ page = 0, size = 20, signal } = {}) =>
   request(`/api/stores?page=${page}&size=${size}`, { signal })
 export const getStore = (storeId, { signal } = {}) =>

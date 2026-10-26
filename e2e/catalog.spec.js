@@ -26,11 +26,11 @@ async function fillProduct(page, { sku = 'NOVO-1', price = '19,90' } = {}) {
   await page.getByLabel('Descrição', { exact: true }).fill('Descrição de teste')
 }
 
-test('seletor isola catalogos e o papel por loja sem alterar o mural', async ({ page }) => {
+test('seletor isola catalogos e o papel por loja sem mural de teste', async ({ page }) => {
   await setup(page)
   await page.goto('/')
   await expect(page.getByLabel('Loja ativa')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Mural de conexões' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Mural de conexões' })).toHaveCount(0)
   await selectStore(page, storeA.id)
   await expect(page.getByRole('heading', { name: 'Produto Norte', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Cadastrar produto', exact: true })).toBeVisible()

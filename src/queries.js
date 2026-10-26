@@ -6,10 +6,9 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { getCurrentUser, getMessages, login, logout, register, sendMessage } from './api'
+import { getCurrentUser, login, logout, register } from './api'
 
 export const sessionKey = ['session']
-export const messagesKey = (userId) => ['messages', userId]
 const privateQueries = { predicate: (query) => query.queryKey[0] !== sessionKey[0] }
 
 async function clearSession(client, filters) {
@@ -79,22 +78,5 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => clearSession(client),
-  })
-}
-
-export function useMessages(userId) {
-  const client = useQueryClient()
-  return useQuery({
-    queryKey: messagesKey(userId),
-    queryFn: ({ signal }) => getMessages({ signal }),
-    enabled: () => Boolean(userId) && client.getQueryData(sessionKey)?.id === userId,
-  })
-}
-
-export function useSendMessage(userId) {
-  const client = useQueryClient()
-  return useMutation({
-    mutationFn: sendMessage,
-    onSuccess: () => client.invalidateQueries({ queryKey: messagesKey(userId) }),
   })
 }

@@ -1,17 +1,14 @@
 export const marina = { id: 'user-marina', name: 'Marina Negócios', email: 'marina@example.com' }
 export const bruno = { id: 'user-bruno', name: 'Bruno Negócios', email: 'bruno@example.com' }
 
-export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
+export async function mockQueryApi(page, { user = null } = {}) {
   const state = {
     user,
-    messages,
     calls: [],
     sessionStatus: 200,
-    messageStatus: 200,
     loginStatus: 200,
     logoutStatus: 204,
-    sendStatus: 201,
-    holdMessages: null,
+    holdStores: null,
     stores: [],
     products: {},
     storesStatus: 200,
@@ -63,8 +60,10 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
       }
     }
     if (method === 'GET' && path === '/api/stores') {
+      const snapshot = slice(state.stores)
+      if (state.holdStores) await state.holdStores
       return state.storesStatus === 200
-        ? respond(200, slice(state.stores))
+        ? respond(200, snapshot)
         : respond(state.storesStatus, { message: 'Falha ao carregar lojas.' })
     }
     const orderRoute = path.match(/^\/api\/stores\/([^/]+)\/orders(?:\/([^/]+)(\/confirm|\/cancel)?)?$/)
@@ -254,19 +253,6 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
         state.user = null
         return respond(204)
       }
-      if (path === '/api/mensagens') {
-        if (state.sendStatus !== 201) return respond(state.sendStatus, { message: 'Publicacao recusada.' })
-        state.messages.push({ id: String(state.messages.length + 1), texto: request.postDataJSON().texto })
-        return respond(201)
-      }
-    }
-    if (method === 'GET' && path === '/api/mensagens') {
-      const snapshot = [...state.messages]
-      if (state.holdMessages) await state.holdMessages
-      if (state.messageStatus !== 200) return respond(state.messageStatus, {
-        message: state.messageStatus === 401 ? 'Sessao expirada.' : 'Nao foi possivel carregar o mural.',
-      })
-      return respond(200, snapshot)
     }
     return respond(501, { message: `Rota nao prevista no teste: ${method} ${path}` })
   })

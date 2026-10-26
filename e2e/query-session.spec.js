@@ -8,7 +8,10 @@ test('sessao anonima nao repete 401; cadastro e login preservam CSRF', async ({ 
   // StrictMode can cancel the initial GET and start a replacement during mount.
   expect(api.calls.filter((call) => call.path === '/api/auth/me').length).toBeLessThanOrEqual(2)
   await signIn(page, marina.email)
-  await expect(page.getByText('O próximo assunto pode começar com você.', { exact: false })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Suas lojas', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Mural de conexões' })).toHaveCount(0)
+  await expect(page.getByLabel('Sua mensagem', { exact: true })).toHaveCount(0)
+  expect(api.calls.filter((call) => call.path === '/api/mensagens')).toHaveLength(0)
   const writes = api.calls.filter((call) => call.method === 'POST')
   expect(writes.map((call) => call.path)).toEqual(['/api/auth/register', '/api/auth/login'])
   expect(writes.every((call) => call.headers['x-csrf-token'] === 'test-csrf')).toBe(true)
@@ -43,19 +46,18 @@ test('falha temporaria de sessao tem retry limitado e recuperacao manual', async
   await expect(page.getByRole('heading', { name: 'Olá, Marina.' })).toBeVisible()
 })
 
-test('sessao expirada ao voltar para a aba limpa mural antes de autenticar novamente', async ({ page }) => {
+test('sessao expirada ao voltar para a aba limpa lojas antes de autenticar novamente', async ({ page }) => {
   await page.clock.install()
-  const api = await mockQueryApi(page, {
-    user: marina, messages: [{ id: 'old', texto: 'Mensagem da sessao expirada' }],
-  })
+  const api = await mockQueryApi(page, { user: marina })
+  api.stores = [{ id: 'old', name: 'Loja da sessao expirada', role: 'OWNER' }]
   await page.goto('/')
-  await expect(page.getByText('Mensagem da sessao expirada', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('Loja ativa')).toContainText('Loja da sessao expirada')
   api.user = null
   await page.clock.fastForward(31_000)
   await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')))
   await expect(page.getByRole('heading', { name: 'Bom ter você de volta.' })).toBeVisible()
-  api.messages = [{ id: 'new', texto: 'Mensagem depois da reautenticacao' }]
+  api.stores = [{ id: 'new', name: 'Loja depois da reautenticacao', role: 'OWNER' }]
   await signIn(page, marina.email)
-  await expect(page.getByText('Mensagem depois da reautenticacao', { exact: true })).toBeVisible()
-  await expect(page.getByText('Mensagem da sessao expirada', { exact: true })).toBeHidden()
+  await expect(page.getByLabel('Loja ativa')).toContainText('Loja depois da reautenticacao')
+  await expect(page.getByLabel('Loja ativa')).not.toContainText('Loja da sessao expirada')
 })

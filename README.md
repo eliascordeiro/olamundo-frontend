@@ -1,7 +1,7 @@
 # Nexo Business - Frontend
 
 Workspace corporativo em React + Vite: login responsivo, cadastro, visualizacao
-de senha, restauracao de sessao, mural autenticado, seletor de lojas,
+de senha, restauracao de sessao, seletor de lojas,
 catalogo, estoque, pedidos internos por loja e logout.
 
 ## Desenvolvimento
@@ -28,11 +28,13 @@ O frontend usa `credentials: include` e solicita token CSRF antes de cada
 POST. Nao guarda senhas, identificadores de sessao ou JWT no localStorage.
 O cookie HttpOnly e administrado pelo backend e inacessivel ao JavaScript.
 Erros de rede e validacao sao exibidos; uma sessao expirada volta ao login.
-O mural preserva as mensagens existentes e e compartilhado pelos usuarios.
+O mural de mensagens usado para testar MongoDB foi removido da interface e da
+API. Nenhuma requisicao de mensagens e feita. MongoDB continua obrigatorio no
+backend para usuarios e sessoes; nao remova o servico ou suas variaveis.
 
 ## Dados remotos com React Query
 
-TanStack Query gerencia a sessao, o mural, as lojas, os produtos e o estoque; formularios e senhas continuam
+TanStack Query gerencia a sessao, as lojas, os produtos, o estoque e os pedidos; formularios e senhas continuam
 no estado local dos componentes. Os hooks ficam em `src/queries.js`, sobre
 a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
@@ -40,7 +42,6 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
   foco/conexao. Isso nao substitui polling, SSE ou WebSocket para tempo real.
 - Apenas falhas de rede e HTTP 5xx de consultas recebem uma nova tentativa.
   Mutacoes nunca sao repetidas automaticamente.
-- Publicar uma mensagem invalida a consulta do mural daquele usuario.
 - Logout, expiracao de sessao (401) e novo login cancelam consultas e removem
   dados privados anteriores. Consultas HTTP respeitam o sinal de cancelamento.
 - O cache existe apenas em memoria, sem persistencia no navegador. Mutacoes
@@ -61,7 +62,6 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
   pagina. Criar produto invalida somente o catalogo da loja correspondente.
   Trocar de loja desmonta o formulario e cancela consultas antigas.
 - Erros de consulta sao mostrados com tentativa manual, sem fingir uma lista vazia.
-  O mural existente permanece global, nao e um canal privado da loja.
 
 Criacao de lojas e inclusao de membros continuam pela API/Swagger. Ainda nao
 existem telas para imagens, edicao/exclusao de produtos ou checkout.
@@ -117,7 +117,7 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
   Confirmacao usa o ID do pedido salvo e pode ser repetida sem nova baixa,
   inclusive depois de reload; primeiro consulte seu estado.
 - Sucesso na confirmacao atualiza o pedido e invalida apenas os saldos/historicos
-  dos produtos envolvidos na mesma conta/loja. O mural continua global.
+  dos produtos envolvidos na mesma conta/loja.
 
 ## Etapa 5 - cancelamento integral
 
@@ -156,19 +156,19 @@ npm test
 
 Os testes E2E iniciam o Vite automaticamente, mas exigem backend real disponivel
 em localhost:8081 e MongoDB/PostgreSQL de **testes**, sem dados reais. Eles criam contas
-`nexo-e2e-...@example.com` e mensagens; descarte esse banco isolado ao terminar.
-Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, mural,
+`nexo-e2e-...@example.com`; descarte esse banco isolado ao terminar.
+Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, ausencia do mural,
 logout e viewport movel. Nao rode contra producao.
 
 Os testes `query-*.spec.js`, `catalog.spec.js`, `inventory.spec.js` e `orders.spec.js` validam a integracao do React Query no navegador
-com API interceptada: sessao, CSRF, invalidacao do mural, retries, erros e
+com API interceptada: sessao, CSRF, ausencia de requisicoes de mensagens, retries, erros e
 isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
 cadastro, estoque/historico, pedidos, cancelamento com estorno integral,
 resposta perdida com reenvio idempotente e layout
 movel. Nao exigem backend:
 
 ```bash
-npm test -- e2e/orders.spec.js e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-messages.spec.js e2e/query-isolation.spec.js
+npm test -- e2e/orders.spec.js e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-isolation.spec.js
 ```
 
 Esses testes nao substituem os testes HTTP do backend com bancos reais nem
@@ -211,7 +211,7 @@ publicar este frontend. Nao sao necessarias novas variaveis de ambiente.
 
 Valide no Railway cadastro como OWNER/MANAGER, leitura como STAFF, repeticao de
 SKU na mesma loja e isolamento ao trocar de loja. Confira preco e persistencia
-apos reload, alem de logout/login e mural. Se precisar reverter, publique o
+apos reload, alem de logout/login. Se precisar reverter, publique o
 frontend anterior antes de reverter o backend, sem apagar tabelas do banco.
 
 O nginx aplica CSP, bloqueio de frames e protecao contra MIME sniffing.

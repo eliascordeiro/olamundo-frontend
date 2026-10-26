@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useLogin, useLogout, useMessages, useRegister, useSendMessage, useSession } from './queries'
+import { useLogin, useLogout, useRegister, useSession } from './queries'
 import StoreCatalog from './features/catalog/StoreCatalog'
 import './App.css'
 
@@ -127,35 +127,9 @@ function AuthForm() {
 }
 
 function Workspace({ user }) {
-  const messagesQuery = useMessages(user.id)
-  const sendMutation = useSendMessage(user.id)
   const logoutMutation = useLogout()
-  const messages = messagesQuery.data ?? []
-  const [text, setText] = useState('')
   const [error, setError] = useState('')
-  const loading = messagesQuery.isPending
-  const busy = sendMutation.isPending || logoutMutation.isPending
-  const displayedError = error || messagesQuery.error?.message
-
-  function loadMessages() {
-    setError('')
-    void messagesQuery.refetch()
-  }
-
-  async function submitMessage(event) {
-    event.preventDefault()
-    if (!text.trim()) {
-      setError('Escreva uma mensagem antes de enviar.')
-      return
-    }
-    setError('')
-    try {
-      await sendMutation.mutateAsync(text.trim())
-      setText('')
-    } catch (err) {
-      setError(err.message)
-    }
-  }
+  const busy = logoutMutation.isPending
 
   async function signOut() {
     setError('')
@@ -168,14 +142,10 @@ function Workspace({ user }) {
 
   return <main className="workspace">
     <header className="workspace-header"><Brand /><div className="account-menu"><span>{user.name}</span><button type="button" className="secondary-button" onClick={signOut} disabled={busy}><Icon name="exit" size={17} /> Sair</button></div></header>
-    <section className="workspace-body"><span className="section-kicker">SEU WORKSPACE</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Boas conexões começam com uma conversa.</p>
+    <section className="workspace-body"><span className="section-kicker">SEU WORKSPACE</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Gerencie suas lojas, produtos e pedidos em um só lugar.</p>
       <div className="workspace-banner"><span className="welcome-icon"><Icon name="shield" size={24} /></span><div><h2>Você está no seu espaço de negócios.</h2><p>Acesso autenticado. Ideias prontas para ganhar vida.</p></div><span className="connected-badge"><span className="status-dot" /> Conectado</span></div>
+      {error && <div className="alert alert-error" role="alert">{error}</div>}
       <StoreCatalog userId={user.id} />
-      <section className="messages-card"><div className="messages-heading"><div><h2>Mural de conexões</h2><p>Compartilhe uma ideia com o workspace.</p></div><Icon name="mail" size={24} /></div>
-        <form className="message-form" onSubmit={submitMessage}><label htmlFor="message">Sua mensagem</label><textarea id="message" value={text} onChange={(event) => setText(event.target.value)} placeholder="O que vamos construir hoje?" required maxLength={2000} disabled={busy} /><button className="primary-button" disabled={busy || !text.trim()}>{busy ? 'Aguarde...' : 'Publicar mensagem'}<Icon name="arrow" size={18} /></button></form>
-        {displayedError && <div className="alert alert-error" role="alert">{displayedError} <button type="button" className="inline-button" onClick={loadMessages} disabled={busy || messagesQuery.isFetching}>Tentar novamente</button></div>}
-        <div aria-live="polite">{loading ? <p className="empty-state">Carregando mensagens...</p> : messagesQuery.isError && messagesQuery.data === undefined ? null : messages.length === 0 ? <p className="empty-state">O próximo assunto pode começar com você. Publique a primeira mensagem.</p> : <ul className="message-list">{messages.map((message) => <li key={message.id}><p>{message.texto}</p>{message.criadaEm && <time dateTime={message.criadaEm}>{new Date(message.criadaEm).toLocaleString('pt-BR')}</time>}</li>)}</ul>}</div>
-      </section>
     </section>
   </main>
 }
