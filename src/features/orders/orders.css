@@ -15,6 +15,8 @@
 .order-detail li { padding: 10px 0; }
 .order-detail li span { display: block; margin-top: 6px; }
 .order-total { margin: 18px 0; }
+.order-cancellation { margin-top: 18px; }
+.order-cancellation textarea { display: block; width: 100%; min-height: 90px; margin-top: 6px; padding: 10px; border: 1px solid #dce3dd; border-radius: 8px; font: inherit; resize: vertical; }
 .orders-panel .alert { margin-top: 16px; }
 @media (max-width: 650px) {
   .orders-panel { padding: 14px; }

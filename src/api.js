@@ -83,3 +83,5 @@ export const getOrder = (storeId, orderId, { signal } = {}) =>
 export const createOrder = (storeId, order) => post(ordersPath(storeId), order)
 export const confirmOrder = (storeId, orderId) =>
   post(`${ordersPath(storeId)}/${encodeURIComponent(orderId)}/confirm`, {})
+export const cancelOrder = (storeId, orderId, cancellation) =>
+  post(`${ordersPath(storeId)}/${encodeURIComponent(orderId)}/cancel`, cancellation)

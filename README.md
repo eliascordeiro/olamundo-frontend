@@ -106,7 +106,7 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
 - **Confirmar pedido** mostra um segundo passo explicito. **Confirmar e baixar
   estoque** baixa todos os itens ou nenhum; falta de saldo mantem o pedido em
   rascunho e permite tentar novamente. Confirmado nao significa pago.
-- Sem pagamento, frete, cliente, cancelamento ou devolucao automatica.
+- Sem pagamento, frete ou cliente; cancelamento integral esta na etapa 5.
   Valide com produtos de teste; nao confirme uma venda real que dependa desses fluxos.
 - Hooks em `src/features/orders/queries.js` isolam lista, detalhe, carrinho e
   criacao pendente por conta/loja. Carrinho e operacoes incertas persistem em
@@ -118,6 +118,32 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
   inclusive depois de reload; primeiro consulte seu estado.
 - Sucesso na confirmacao atualiza o pedido e invalida apenas os saldos/historicos
   dos produtos envolvidos na mesma conta/loja. O mural continua global.
+
+## Etapa 5 - cancelamento integral
+
+- OWNER/MANAGER usam **Cancelar pedido**, informam motivo de 2 a 500 caracteres
+  e executam **Confirmar cancelamento definitivo**. **Manter pedido** abandona
+  o formulario sem enviar nada. STAFF somente consulta.
+- Rascunho cancelado nao altera estoque. Confirmado cancelado devolve todos
+  os itens ou nenhum; se um saldo excederia o limite, o pedido segue confirmado
+  e o erro e exibido. Nao ha cancelamento parcial, reabertura ou reembolso.
+- O detalhe e a lista mostram Cancelado. O detalhe preserva itens/valores,
+  confirmador/data anteriores e motivo, responsavel e data de cancelamento.
+  **Atualizar pedido** consulta a situacao atual, inclusive apos operacao
+  em outra aba ou resposta perdida.
+- Cancelamento usa o ID do pedido salvo. Repetir com o mesmo motivo retorna
+  o resultado original sem outro estorno; motivo diferente retorna 409.
+  A autorizacao definitiva continua sendo do servidor.
+- O hook compartilhado conserva o motivo de cancelamento incerto em cache
+  por usuario/loja/pedido, bloqueando edicao e confirmacao ate resolver o envio.
+  Nao ha POST automatico. O UUID local do hook identifica a tentativa no cache;
+  a API recebe somente o motivo e usa o pedido como chave idempotente.
+  Rejeicao definitiva libera a correcao do motivo; rede/timeout/5xx preservam
+  o mesmo envio. Logout/401/reload removem o cache, nao o pedido salvo.
+  Apos reload, consulte o estado antes de reenviar.
+- Confirmacao/cancelamento compartilham bloqueio de envio no mesmo pedido.
+  Sucesso cancela uma consulta antiga do detalhe antes de atualizar o cache
+  e invalida apenas a lista da loja e estoque/historico dos itens envolvidos.
 
 ## Validacao
 
@@ -137,7 +163,8 @@ logout e viewport movel. Nao rode contra producao.
 Os testes `query-*.spec.js`, `catalog.spec.js`, `inventory.spec.js` e `orders.spec.js` validam a integracao do React Query no navegador
 com API interceptada: sessao, CSRF, invalidacao do mural, retries, erros e
 isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
-cadastro, estoque/historico, pedidos, resposta perdida com reenvio idempotente e layout
+cadastro, estoque/historico, pedidos, cancelamento com estorno integral,
+resposta perdida com reenvio idempotente e layout
 movel. Nao exigem backend:
 
 ```bash
@@ -206,3 +233,17 @@ Valide rascunho sem baixa, valores preservados, confirmacao com baixa unica,
 falta de saldo sem baixa parcial, leitura como STAFF e isolamento por loja.
 Rollback preserva pedidos e baixas ja confirmadas: frontend anterior primeiro,
 backend depois, sem apagar tabelas ou desfazer movimentos no banco.
+
+### Cancelamento integral - etapa 5
+
+Publique primeiro o backend com V5, confira healthcheck e preservacao dos
+pedidos existentes; depois publique o frontend. Nao ha novas variaveis,
+dependencias ou mudancas no proxy.
+Valide cancelamento de rascunho sem movimentacao e de confirmado com devolucao
+integral, auditoria apos reload, reenvio sem novo estorno, STAFF e isolamento.
+Use somente produtos de teste autorizados.
+
+Depois de existir um pedido CANCELLED, o backend e o frontend da etapa 4 nao
+reconhecem esse estado. Preserve o suporte em qualquer versao de recuperacao
+ou interrompa pedidos enquanto aplica correcao progressiva. Nao volte aos
+binarios anteriores nem altere estados/saldos por SQL para contornar o rollback.

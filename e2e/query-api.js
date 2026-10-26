@@ -31,8 +31,11 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
     orderStatus: {},
     createOrderStatus: 200,
     confirmOrderStatus: 200,
+    cancelOrderStatus: 200,
     dropNextOrderResponse: false,
     dropNextConfirmResponse: false,
+    dropNextCancelResponse: false,
+    holdCancelResponse: null,
     holdOrders: {},
   }
   await page.route('**/api/**', async (route) => {
@@ -64,9 +67,9 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
         ? respond(200, slice(state.stores))
         : respond(state.storesStatus, { message: 'Falha ao carregar lojas.' })
     }
-    const orderRoute = path.match(/^\/api\/stores\/([^/]+)\/orders(?:\/([^/]+)(\/confirm)?)?$/)
+    const orderRoute = path.match(/^\/api\/stores\/([^/]+)\/orders(?:\/([^/]+)(\/confirm|\/cancel)?)?$/)
     if (orderRoute) {
-      const [, storeId, orderId, confirming] = orderRoute
+      const [, storeId, orderId, action] = orderRoute
       const store = state.stores.find(item => item.id === storeId)
       if (!store || state.storeStatus[storeId]) return respond(404, { message: 'Loja nao encontrada.' })
       state.orders[storeId] ??= []
@@ -110,9 +113,42 @@ export async function mockQueryApi(page, { user = null, messages = [] } = {}) {
           }
           return respond(200, saved)
         }
-        if (confirming) {
+        if (action === '/cancel') {
+          if (!order) return respond(404, { message: 'Pedido nao encontrado.' })
+          if (state.cancelOrderStatus !== 200) return respond(state.cancelOrderStatus, { message: 'Cancelamento recusado.' })
+          const reason = request.postDataJSON().reason?.trim()
+          if (!reason || reason.length < 2 || reason.length > 500) return respond(400, { message: 'Motivo invalido.' })
+          if (order.summary.status === 'CANCELLED') {
+            return reason === order.summary.cancellationReason ? respond(200, order)
+              : respond(409, { message: 'Pedido ja cancelado com outro motivo. Consulte o pedido.' })
+          }
+          if (order.summary.status === 'CONFIRMED') {
+            if (order.items.some(item => (state.stock[`${storeId}/${item.productId}`] ?? 0) + item.quantity > 2147483647)) {
+              return respond(409, { message: 'O saldo excederia o limite de 2147483647 unidades.' })
+            }
+            for (const item of order.items) {
+              const key = `${storeId}/${item.productId}`
+              state.stock[key] = (state.stock[key] ?? 0) + item.quantity
+              state.stockHistory[key] ??= []
+              state.stockHistory[key].unshift({ id: crypto.randomUUID(), storeId, productId: item.productId,
+                type: 'IN', quantity: item.quantity, balanceAfter: state.stock[key],
+                reason: `Cancelamento do pedido ${orderId}`, userId: state.user.id,
+                createdAt: new Date().toISOString() })
+            }
+          }
+          Object.assign(order.summary, { status: 'CANCELLED', cancelledBy: state.user.id,
+            cancelledAt: new Date().toISOString(), cancellationReason: reason })
+          if (state.holdCancelResponse) await state.holdCancelResponse
+          if (state.dropNextCancelResponse) {
+            state.dropNextCancelResponse = false
+            return route.abort('failed')
+          }
+          return respond(200, order)
+        }
+        if (action === '/confirm') {
           if (!order) return respond(404, { message: 'Pedido nao encontrado.' })
           if (state.confirmOrderStatus !== 200) return respond(state.confirmOrderStatus, { message: 'Confirmacao recusada.' })
+          if (order.summary.status === 'CANCELLED') return respond(409, { message: 'Pedido cancelado nao pode ser confirmado.' })
           if (order.summary.status !== 'CONFIRMED') {
             if (order.items.some(item => (state.stock[`${storeId}/${item.productId}`] ?? 0) < item.quantity)) {
               return respond(409, { message: 'Saldo insuficiente para esta saida.' })
