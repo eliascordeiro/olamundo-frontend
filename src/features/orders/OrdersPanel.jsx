@@ -116,9 +116,8 @@ function OrderDetail({ userId, store, orderId }) {
   </section>
 }
 
-export default function OrdersPanel({ userId, store, draft, creation }) {
+export default function OrdersPanel({ userId, store, draft, creation, selectedId, onSelectOrder }) {
   const [page, setPage] = useState(0)
-  const [selectedId, setSelectedId] = useState('')
   const [error, setError] = useState('')
   const orders = useOrders(userId, store.id, page)
   const canWrite = store.role === 'OWNER' || store.role === 'MANAGER'
@@ -135,7 +134,7 @@ export default function OrdersPanel({ userId, store, draft, creation }) {
     }
     try {
       const order = await creation.submit({ items: draft.items.map(item => ({ productId: item.productId, quantity: item.quantity })) })
-      setSelectedId(order.summary.id)
+      onSelectOrder(order.summary.id)
     } catch (err) { setError(err.message) }
   }
 
@@ -175,7 +174,7 @@ export default function OrdersPanel({ userId, store, draft, creation }) {
         : orders.data.content.length === 0 ? <p>Nenhum pedido nesta página.</p>
           : <ul className="orders-list">{orders.data.content.map(order => <li key={order.id}>
             <span>{statusName(order.status)} · {money(order.total)} · {date.format(new Date(order.createdAt))}</span>
-            <button type="button" className="secondary-button" onClick={() => setSelectedId(order.id)}
+            <button type="button" className="secondary-button" onClick={() => onSelectOrder(order.id)}
               aria-label={`Ver pedido ${order.id}`}>Ver pedido {order.id}</button>
           </li>)}</ul>}
     <nav className="catalog-pagination" aria-label="Páginas dos pedidos">

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useLogin, useLogout, useRegister, useSession } from './queries'
 import StoreCatalog from './features/catalog/StoreCatalog'
+import workspaceSections from './features/workspaceSections'
 import './App.css'
 
 function Icon({ name, size = 20, ...props }) {
@@ -14,6 +15,10 @@ function Icon({ name, size = 20, ...props }) {
     shield: <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="m8 12 3 3 5-6" /></>,
     chart: <><path d="M4 4v16h17M8 15l4-5 4 2 5-7" /></>,
     grid: <><rect x="3" y="3" width="7" height="7" rx="2" /><rect x="14" y="3" width="7" height="7" rx="2" /><rect x="3" y="14" width="7" height="7" rx="2" /><rect x="14" y="14" width="7" height="7" rx="2" /></>,
+    home: <><path d="m3 10 9-7 9 7" /><path d="M5 9v11h14V9M9 20v-6h6v6" /></>,
+    products: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 8 9 5 9-5M3 8v9l9 5 9-5V8M12 13v9" /></>,
+    inventory: <><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" /><path d="m4 7.5 8 4.5 8-4.5M12 12v9m-4-16 8 4.5" /></>,
+    orders: <><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" /><path d="M9 8h6m-6 4h6m-6 4h3" /></>,
     check: <path d="m5 12 4 4L19 6" />,
     exit: <><path d="M9 4H4v16h5m5-13 5 5-5 5m-6-5h13" /></>,
   }
@@ -126,9 +131,28 @@ function AuthForm() {
   )
 }
 
+function WorkspaceMenu({ section, onSectionChange }) {
+  return <nav className="workspace-menu" aria-label="Navegação principal">
+    <span className="workspace-menu-label">MENU PRINCIPAL</span>
+    {workspaceSections.map((item) =>
+      <button key={item.id} type="button" className="workspace-nav-button"
+        aria-label={item.id === 'orders' ? 'Pedidos da loja' : item.label}
+        aria-current={section === item.id ? 'page' : undefined}
+        onClick={() => onSectionChange(item.id)}>
+        <Icon name={item.icon} size={19} />
+        <span>{item.label}</span>
+      </button>)}
+    <div className="workspace-menu-note">
+      <Icon name="shield" size={16} />
+      <span>Acesso protegido<br />por loja e perfil</span>
+    </div>
+  </nav>
+}
+
 function Workspace({ user }) {
   const logoutMutation = useLogout()
   const [error, setError] = useState('')
+  const [section, setSection] = useState('catalog')
   const busy = logoutMutation.isPending
 
   async function signOut() {
@@ -142,10 +166,15 @@ function Workspace({ user }) {
 
   return <main className="workspace">
     <header className="workspace-header"><Brand /><div className="account-menu"><span>{user.name}</span><button type="button" className="secondary-button" onClick={signOut} disabled={busy}><Icon name="exit" size={17} /> Sair</button></div></header>
-    <section className="workspace-body"><span className="section-kicker">SEU WORKSPACE</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Gerencie suas lojas, produtos e pedidos em um só lugar.</p>
+    <section className="workspace-body"><div className="workspace-intro"><span className="section-kicker">SEU WORKSPACE</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Gerencie suas lojas, produtos e pedidos em um só lugar.</p></div>
       <div className="workspace-banner"><span className="welcome-icon"><Icon name="shield" size={24} /></span><div><h2>Você está no seu espaço de negócios.</h2><p>Acesso autenticado. Ideias prontas para ganhar vida.</p></div><span className="connected-badge"><span className="status-dot" /> Conectado</span></div>
       {error && <div className="alert alert-error" role="alert">{error}</div>}
-      <StoreCatalog userId={user.id} />
+      <div className="workspace-layout">
+        <WorkspaceMenu section={section} onSectionChange={setSection} />
+        <div className="workspace-main">
+          <StoreCatalog userId={user.id} section={section} onSectionChange={setSection} />
+        </div>
+      </div>
     </section>
   </main>
 }

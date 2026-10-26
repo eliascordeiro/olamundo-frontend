@@ -8,7 +8,7 @@ test('sessao anonima nao repete 401; cadastro e login preservam CSRF', async ({ 
   // StrictMode can cancel the initial GET and start a replacement during mount.
   expect(api.calls.filter((call) => call.path === '/api/auth/me').length).toBeLessThanOrEqual(2)
   await signIn(page, marina.email)
-  await expect(page.getByRole('heading', { name: 'Suas lojas', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sua loja ativa', exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Mural de conexões' })).toHaveCount(0)
   await expect(page.getByLabel('Sua mensagem', { exact: true })).toHaveCount(0)
   expect(api.calls.filter((call) => call.path === '/api/mensagens')).toHaveLength(0)

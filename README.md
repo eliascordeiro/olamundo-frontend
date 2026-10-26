@@ -51,6 +51,10 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
 - O workspace lista as lojas da conta em paginas de 20, com **Carregar mais lojas**.
   A selecao e explicita e nao e persistida entre reloads ou sessoes.
+- A navegacao agrupa **Visao geral**, **Catalogo**, **Estoque** e **Pedidos**.
+  Em telas grandes, o menu fica ao lado do conteudo; no celular, vira uma barra
+  horizontal que permanece no topo da area de operacoes ao rolar a pagina. A
+  loja ativa permanece selecionada ao alternar entre as secoes.
 - Cada loja tem catalogo paginado de 20 produtos. OWNER e MANAGER podem cadastrar;
   STAFF apenas consulta. A autorizacao definitiva sempre e feita pelo backend.
 - O cadastro recebe nome, SKU, descricao opcional e preco em reais. Aceita virgula
@@ -68,9 +72,10 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
 
 ## Etapa 3 - estoque
 
-- **Estoque** em cada produto abre saldo e historico paginado (20 por pagina).
-  Consultas sao feitas somente para o produto selecionado, sem uma requisicao
-  por item da listagem. OWNER/MANAGER registram; STAFF apenas consulta.
+- A secao **Estoque** lista os produtos da loja; escolher um produto abre seu
+  saldo e historico paginado (20 por pagina). Consultas sao feitas somente para
+  o produto selecionado, sem uma requisicao por item da listagem. OWNER/MANAGER
+  registram; STAFF apenas consulta.
 - Quantidades inteiras, de 1 a 2147483647; saldo inicial zero. Entrada e saida
   exigem motivo. Nenhuma quantidade e presumida para os produtos existentes.
 - Os hooks de `src/features/inventory/queries.js` isolam saldo e historico por
@@ -94,15 +99,16 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
 ## Etapa 4 - pedidos internos
 
 - OWNER/MANAGER usam **Adicionar ao pedido** no catalogo, inclusive em paginas
-  diferentes, e ajustam as quantidades no painel de pedidos. Limite de 50
-  produtos distintos, quantidades inteiras de 1 a 2147483647.
+  diferentes; apos adicionar, a interface abre a secao **Pedidos**, onde ajustam
+  as quantidades. Limite de 50 produtos distintos, quantidades inteiras de 1 a
+  2147483647.
 - **Salvar rascunho do pedido** consulta os precos no backend e guarda os
   valores usados. A interface nao envia precos nem calcula totais em ponto
   flutuante. Campos monetarios recebidos como strings sao formatados sem
   conversao para Number, inclusive totais grandes.
 - O pedido salvo mostra nome/SKU, quantidade, preco unitario, subtotal e total.
-  Nao e editavel; nao reserva estoque. A lista e o detalhe ficam em
-  **Pedidos da loja**; STAFF somente consulta.
+  Nao e editavel; nao reserva estoque. Lista e detalhe ficam na secao
+  **Pedidos**; STAFF somente consulta.
 - **Confirmar pedido** mostra um segundo passo explicito. **Confirmar e baixar
   estoque** baixa todos os itens ou nenhum; falta de saldo mantem o pedido em
   rascunho e permite tentar novamente. Confirmado nao significa pago.
@@ -160,12 +166,13 @@ em localhost:8081 e MongoDB/PostgreSQL de **testes**, sem dados reais. Eles cria
 Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, ausencia do mural,
 logout e viewport movel. Nao rode contra producao.
 
-Os testes `query-*.spec.js`, `catalog.spec.js`, `inventory.spec.js` e `orders.spec.js` validam a integracao do React Query no navegador
+Os testes `query-*.spec.js`, `catalog.spec.js`, `inventory.spec.js`, `orders.spec.js`
+e `workspace-navigation.spec.js` validam a integracao do React Query no navegador
 com API interceptada: sessao, CSRF, ausencia de requisicoes de mensagens, retries, erros e
 isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
 cadastro, estoque/historico, pedidos, cancelamento com estorno integral,
-resposta perdida com reenvio idempotente e layout
-movel. Nao exigem backend:
+resposta perdida com reenvio idempotente, navegacao por secao e layout movel.
+Nao exigem backend:
 
 ```bash
 npm test -- e2e/orders.spec.js e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-isolation.spec.js

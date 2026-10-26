@@ -16,10 +16,21 @@ async function setup(page, role = 'OWNER') {
 }
 
 async function add(page, name = 'Produto Norte') {
+  await page.getByRole('button', { name: 'Catálogo', exact: true }).click()
   await page.getByRole('button', { name: `Adicionar ${name} ao pedido`, exact: true }).click()
 }
 
+async function orders(page) {
+  await page.getByRole('button', { name: 'Pedidos da loja', exact: true }).click()
+}
+
+async function viewStock(page, name) {
+  await page.getByRole('button', { name: 'Catálogo', exact: true }).click()
+  await page.getByRole('button', { name: `Ver estoque de ${name}`, exact: true }).click()
+}
+
 async function save(page) {
+  await orders(page)
   await page.getByRole('button', { name: 'Salvar rascunho do pedido', exact: true }).click()
   await expect(page.getByText('Situação:', { exact: false })).toContainText('Rascunho')
 }
@@ -33,7 +44,7 @@ const writes = api => api.calls.filter(call => call.method === 'POST' && /\/orde
 
 test('gerente cria rascunho com valores do servidor e confirma baixando estoque', async ({ page }) => {
   const api = await setup(page, 'MANAGER')
-  await page.getByRole('button', { name: 'Ver estoque de Produto Norte', exact: true }).click()
+  await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('10 unidades')
   await add(page)
   await page.getByLabel('Quantidade de Produto Norte', { exact: true }).fill('3')
@@ -47,12 +58,13 @@ test('gerente cria rascunho com valores do servidor e confirma baixando estoque'
   await confirm(page)
   await expect(page.getByText('Situação:', { exact: false })).toContainText('Confirmado')
   await expect(page.getByText('Total do pedido:')).toContainText('R$ 0,30')
+  await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('7 unidades')
   expect(api.stockHistory['north/one']).toHaveLength(1)
   await expect(page.getByRole('button', { name: 'Confirmar pedido', exact: true })).toHaveCount(0)
   await page.reload()
   await page.getByLabel('Loja ativa').selectOption('north')
-  await page.getByRole('button', { name: 'Pedidos da loja', exact: true }).click()
+  await orders(page)
   await page.getByRole('button', { name: `Ver pedido ${api.orders.north[0].summary.id}`, exact: true }).click()
   await expect(page.getByText('Total do pedido:')).toContainText('R$ 0,30')
 })
@@ -78,13 +90,14 @@ test('criacao com resposta perdida preserva identificador ao trocar de loja', as
   const api = await setup(page)
   api.dropNextOrderResponse = true
   await add(page)
+  await orders(page)
   await page.getByRole('button', { name: 'Salvar rascunho do pedido', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível conectar')
   expect(writes(api)).toHaveLength(1)
   await expect(page.getByLabel('Quantidade de Produto Norte')).toBeDisabled()
   await page.getByLabel('Loja ativa').selectOption('south')
   await page.getByLabel('Loja ativa').selectOption('north')
-  await page.getByRole('button', { name: 'Pedidos da loja', exact: true }).click()
+  await orders(page)
   await expect(page.getByLabel('Quantidade de Produto Norte')).toHaveValue('1')
   await page.getByRole('button', { name: 'Confirmar mesmo rascunho', exact: true }).click()
   await expect(page.getByText('Situação:', { exact: false })).toContainText('Rascunho')
@@ -224,19 +237,23 @@ const cancellations = api => api.calls.filter(call => call.method === 'POST' && 
 
 test('gerente cancela confirmado, devolve estoque e preserva valores e auditoria apos reload', async ({ page }) => {
   const api = await setup(page, 'MANAGER')
-  await page.getByRole('button', { name: 'Ver estoque de Produto Norte', exact: true }).click()
+  await viewStock(page, 'Produto Norte')
   await add(page)
   await page.getByLabel('Quantidade de Produto Norte', { exact: true }).fill('3')
   await save(page)
   await confirm(page)
+  await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('7 unidades')
+  await orders(page)
   await openCancellation(page, '  Desistencia interna  ')
   await expect(page.getByRole('form', { name: 'Cancelar pedido', exact: true })).toContainText('devolverá integralmente')
   expect(cancellations(api)).toHaveLength(0)
   await page.getByRole('button', { name: 'Confirmar cancelamento definitivo', exact: true }).click()
   await expect(page.getByText('Situação:', { exact: false })).toContainText('Cancelado')
   await expect(page.getByText('Total do pedido:')).toContainText('R$ 0,30')
+  await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('10 unidades')
+  await orders(page)
   await expect(page.getByText('Motivo: Desistencia interna', { exact: true })).toBeVisible()
   await expect(page.getByText('Estoque devolvido integralmente.', { exact: false })).toBeVisible()
   expect(cancellations(api)[0].body).toEqual({ reason: 'Desistencia interna' })
@@ -404,17 +421,20 @@ test('logout descarta cancelamento incerto antes da proxima conta', async ({ pag
 
 test('atualizar pedido apos resposta perdida recupera situacao e estoque sem novo POST', async ({ page }) => {
   const api = await setup(page)
-  await page.getByRole('button', { name: 'Ver estoque de Produto Norte', exact: true }).click()
+  await viewStock(page, 'Produto Norte')
   await add(page)
   await save(page)
   await confirm(page)
+  await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('9 unidades')
+  await orders(page)
   await openCancellation(page)
   api.dropNextCancelResponse = true
   await page.getByRole('button', { name: 'Confirmar cancelamento definitivo', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível conectar')
   await page.getByRole('button', { name: 'Atualizar pedido', exact: true }).click()
   await expect(page.getByText('Situação:', { exact: false })).toContainText('Cancelado')
+  await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('10 unidades')
   expect(cancellations(api)).toHaveLength(1)
   expect(api.stockHistory['north/one']).toHaveLength(2)
