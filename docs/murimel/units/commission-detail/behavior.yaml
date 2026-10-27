@@ -1,0 +1,17 @@
+unit: commission-detail
+side_effects:
+  - source_loc: "Murimel/Easy650.Prg:82"
+    effect: "Gera PDF detalhado de comissoes por periodo/vendedor."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy650.Prg:232"
+    condition: "Campo 12 (easy_itens.desconto) igual ou diferente de zero."
+    behavior: "Zero usa preco x qtde; outro valor usa o proprio campo como base. Regra exige conciliacao."
+    must_preserve: false
+  - source_loc: "Murimel/Easy650.Prg:453"
+    condition: "Comissao especifica igual a zero."
+    behavior: "Usa padrao do grupo; lookup depende de _loja, preenchido de forma divergente na busca."
+    must_preserve: false
+error_paths: []
+concurrency: { model: sync }
+unresolved: "Validar campo desconto, seletor, ausencia de excecao e politica historica antes de implementar."

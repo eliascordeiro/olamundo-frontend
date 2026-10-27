@@ -1,0 +1,7 @@
+unit: commission-detail
+commit: false
+candidate_splits:
+  - id: "Murimel/Easy650.Prg:149"
+    drivers: [concern_split, reuse_split]
+    rationale: "Query, calculo e renderizacao PDF estao misturados; regra compartilhada com resumido precisa de decisao antes de extracao."
+    source_slice: { file: Murimel/Easy650.Prg, lines: [149, 232] }

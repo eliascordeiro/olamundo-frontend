@@ -1,0 +1,7 @@
+unit: sales-pdv
+commit: false
+candidate_splits:
+  - id: "Murimel/Easy200.prg:1343"
+    drivers: [concern_split, data_ownership_split]
+    rationale: "Tela mistura atendimento, politica de desconto, logistica e SQL; separar responsabilidades pode preservar validacoes sem acoplar UI a persistencia."
+    source_slice: { file: Murimel/Easy200.prg, lines: [1343, 1606] }

@@ -1,0 +1,9 @@
+unit: sales-pdv
+bindings:
+  - type: convention
+    name: "Menu PDV -> Easy200(.F.)"
+    source_loc: "Murimel/EasyControl.Prg:169"
+    target: "Easy200"
+    must_appear_in_target: false
+    notes: "Preservar intencao comercial, nao callback Windows. Nao portar Easy200(.T.) como caixa ativo."
+runtime_config: []

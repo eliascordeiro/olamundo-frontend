@@ -4,7 +4,8 @@ import StockPanel from '../inventory/StockPanel'
 import QueryError from '../../components/QueryError'
 import OrdersPanel from '../orders/OrdersPanel'
 import { useCreateOrder, useOrderDraft } from '../orders/queries'
-import workspaceSections from '../workspaceSections'
+import Icon from '../../components/Icon'
+import { RetailOverview, SalesPreparation } from '../retail/RetailPages'
 import './catalog.css'
 
 const roleNames = { OWNER: 'Proprietário', MANAGER: 'Gerente', STAFF: 'Colaborador' }
@@ -48,7 +49,7 @@ function ProductForm({ userId, storeId }) {
     }
   }
 
-  return <form className="product-form" onSubmit={submit} aria-label="Cadastrar produto">
+  return <form id="product-create" className="product-form" onSubmit={submit} aria-label="Cadastrar produto">
     <h3>Novo produto</h3>
     <fieldset disabled={mutation.isPending}>
       <div className="product-fields">
@@ -75,6 +76,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
   const [stockProduct, setStockProduct] = useState(null)
   const [selectedOrderId, setSelectedOrderId] = useState('')
   const [orderError, setOrderError] = useState('')
+  const [search, setSearch] = useState('')
   const draft = useOrderDraft(userId, store.id)
   const creation = useCreateOrder(userId, store.id)
   const products = useProducts(userId, store.id, page)
@@ -102,11 +104,11 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
   function pagination(label) {
     return <nav className="catalog-pagination" aria-label={`Páginas de ${label}`}>
       <button type="button" className="secondary-button" disabled={page === 0 || products.isFetching}
-        onClick={() => setPage((current) => current - 1)}>Página anterior</button>
+        onClick={() => { setSearch(''); setPage((current) => current - 1) }}>Página anterior</button>
       <span>Página {page + 1}</span>
       <button type="button" className="secondary-button"
         disabled={products.isError || !products.data?.hasNext || products.isFetching}
-        onClick={() => setPage((current) => current + 1)}>Próxima página</button>
+        onClick={() => { setSearch(''); setPage((current) => current + 1) }}>Próxima página</button>
     </nav>
   }
 
@@ -114,46 +116,35 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
     if (products.isPending) return <p role="status">Carregando produtos...</p>
     if (products.isError) return <QueryError query={products} label="Não foi possível carregar os produtos" />
     if (products.data.content.length === 0) return <p className="empty-state">Nenhum produto nesta página.</p>
-    return <ul className="product-list" aria-label={label}>{products.data.content.map((product) =>
+    const normalize = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR')
+    const term = normalize(search.trim())
+    const visibleProducts = products.data.content.filter(product => normalize(`${product.name} ${product.sku}`).includes(term))
+    return <>
+      <div className="product-toolbar"><label className="product-search">
+        Buscar nesta página<input type="search" value={search} maxLength={120} placeholder="Nome do produto ou SKU"
+          onChange={event => setSearch(event.target.value)} />
+      </label><p className="catalog-hint">Busca somente nos {products.data.content.length} produtos desta página. Use a paginação para consultar os demais.</p></div>
+      {visibleProducts.length === 0 && <p className="empty-state" role="status">Nenhum produto encontrado nesta página. Ajuste a busca ou consulte outra página.</p>}
+      <ul className="product-list" aria-label={label}>{visibleProducts.map((product) =>
       <li key={product.id}>
-        <div><h3>{product.name}</h3><span className="catalog-hint">SKU: {product.sku}</span>
+        <span className="product-tile-icon" aria-hidden="true"><Icon name="products" size={24} /></span>
+        <div className="product-info"><h3>{product.name}</h3><span className="catalog-hint">SKU: {product.sku}</span>
           {product.description && <p>{product.description}</p>}</div>
         {action(product)}
       </li>)}</ul>
+    </>
   }
 
-  if (section === 'overview') return <section className="store-overview" aria-label={`Visão geral de ${store.name}`}>
-    <div className="catalog-heading">
-      <div><span className="section-eyebrow">SEU NEGÓCIO</span><h2>Visão geral</h2>
-        <p>Atalhos para as principais operações de {store.name}.</p></div>
-      <span className="store-role">{roleNames[store.role] ?? store.role}</span>
-    </div>
-    <div className="overview-grid">
-      {workspaceSections.filter(item => item.id !== 'overview').map((item, index) => <article className="overview-card" key={item.id}>
-        <span className="overview-card-number">0{index + 1}</span>
-        <h3>{item.label}</h3>
-        <p>{({
-          overview: 'Acompanhe e organize o trabalho da loja em um só lugar.',
-          catalog: 'Consulte produtos, preços e cadastre novos itens.',
-          inventory: 'Consulte saldos e registre movimentações de estoque.',
-          orders: 'Monte pedidos internos, confira itens e acompanhe o histórico.',
-        })[item.id]}</p>
-        <button type="button" className="inline-button" onClick={() => onSectionChange(item.id)}>
-          Acessar {item.label.toLowerCase()} <span aria-hidden="true">→</span>
-        </button>
-      </article>)}
-    </div>
-  </section>
+  if (section === 'overview') return <RetailOverview store={store} draftCount={canCreate ? draft.items.length : 0} onSectionChange={onSectionChange} />
+  if (section === 'sales') return <SalesPreparation onSectionChange={onSectionChange} />
 
   if (section === 'catalog') return <section className="product-catalog" aria-label={`Catálogo de ${store.name}`}>
     <div className="catalog-heading">
       <div><span className="section-eyebrow">PRODUTOS E PREÇOS</span><h2>Catálogo</h2>
-        <p>Produtos e preços desta loja, em reais.</p></div>
-      <span className="store-role">{roleNames[store.role] ?? store.role}</span>
+        <p>Confira o produto do atendimento e organize seu pedido.</p></div>
+      {canCreate && <a className="secondary-button" href="#product-create">Novo produto <Icon name="arrow" size={16} /></a>}
     </div>
-    {canCreate
-      ? <ProductForm userId={userId} storeId={store.id} />
-      : <p className="catalog-hint">Seu acesso permite consultar produtos. O cadastro é feito por proprietários e gerentes.</p>}
+    {!canCreate && <p className="catalog-hint">Seu acesso permite consultar produtos. O cadastro é feito por proprietários e gerentes.</p>}
     {productList(`Produtos do catálogo de ${store.name}`, (product) =>
       <div className="product-actions"><strong>{money.format(product.price)}</strong>
         <button type="button" className="secondary-button" aria-label={`Ver estoque de ${product.name}`}
@@ -164,6 +155,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
           onClick={() => addToOrder(product)}>Adicionar ao pedido</button>}</div>)}
     {orderError && <div className="alert alert-error" role="alert">{orderError}</div>}
     {products.data && pagination('catálogo')}
+    {canCreate && <ProductForm userId={userId} storeId={store.id} />}
   </section>
 
   if (section === 'inventory') return <section className="inventory-workspace" aria-label={`Estoque de ${store.name}`}>
@@ -210,8 +202,9 @@ export default function StoreCatalog({ userId, section, onSectionChange }) {
   const availableStores = stores.data?.pages.flatMap((page) => page.content) ?? []
 
   return <section className="store-catalog" aria-label="Lojas e operações">
-    <div className="catalog-heading"><div><span className="section-eyebrow">CONTEXTO DE TRABALHO</span>
-      <h2>Sua loja ativa</h2><p>As operações exibidas seguem o acesso desta loja.</p></div></div>
+    <div className="store-context">
+      <span className="store-context-icon"><Icon name="store" size={25} /></span>
+      <div className="store-context-main"><span className="section-eyebrow">VOCÊ ESTÁ TRABALHANDO EM</span>
     {stores.isPending ? <p role="status">Carregando lojas...</p>
       : stores.isError && !stores.data ? <QueryError query={stores} label="Não foi possível carregar as lojas" />
         : <>
@@ -234,6 +227,13 @@ export default function StoreCatalog({ userId, section, onSectionChange }) {
             </button>}
           </div>
         </>}
+      </div>
+      <p className="store-context-note"><Icon name="shield" size={17} /> Produtos, estoque e pedidos<br />isolados por loja e perfil.</p>
+    </div>
+    {!selectedId && !stores.isPending && !stores.isError && availableStores.length > 0 && <div className="store-start">
+      <span className="welcome-icon"><Icon name="store" size={30} /></span>
+      <h2>Qual loja vamos organizar hoje?</h2><p>Selecione uma loja acima para acessar suas operações.<br />Você verá somente os dados e ações permitidos para seu perfil.</p>
+    </div>}
     {selectedId && <SelectedStore key={selectedId} userId={userId} storeId={selectedId}
       section={section} onSectionChange={onSectionChange} />}
   </section>

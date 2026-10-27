@@ -1,6 +1,7 @@
 # Nexo Business - Frontend
 
-Workspace corporativo em React + Vite: login responsivo, cadastro, visualizacao
+Gestao de varejo multiloja em React + Vite, com identidade voltada a lojas de
+moveis, eletro e vendas em geral: login responsivo, cadastro, visualizacao
 de senha, restauracao de sessao, seletor de lojas,
 catalogo, estoque, pedidos internos por loja e logout.
 
@@ -51,10 +52,20 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
 - O workspace lista as lojas da conta em paginas de 20, com **Carregar mais lojas**.
   A selecao e explicita e nao e persistida entre reloads ou sessoes.
-- A navegacao agrupa **Visao geral**, **Catalogo**, **Estoque** e **Pedidos**.
-  Em telas grandes, o menu fica ao lado do conteudo; no celular, vira uma barra
-  horizontal que permanece no topo da area de operacoes ao rolar a pagina. A
+- A navegacao agrupa **Visao geral**, **Vendas** (em preparacao), **Catalogo**,
+  **Estoque** e **Pedidos internos**. Em telas grandes, o menu lateral acompanha
+  a operacao; no celular, vira uma barra horizontal no topo da tela. A
   loja ativa permanece selecionada ao alternar entre as secoes.
+  A troca de secao volta ao inicio da pagina, sem ocultar o novo conteudo
+  na posicao de rolagem da tela anterior.
+- O catalogo continua sendo a secao inicial. A visao geral oferece atalhos para
+  a rotina do balcao e sinaliza uma selecao de pedido ainda nao salva. Nao exibe
+  faturamento, contagens globais ou comissoes sem dados reais.
+- Catalogo e estoque permitem buscar nome (sem distinguir acentos/caixa) ou SKU
+  **somente na pagina carregada**, com essa limitacao explicita. A busca e limpa
+  ao paginar ou trocar de loja. Nao e uma busca global no servidor.
+- O cadastro de produto fica depois da listagem, acessivel por **Novo produto**,
+  para priorizar consulta e atendimento sem alterar os campos ou a API.
 - Cada loja tem catalogo paginado de 20 produtos. OWNER e MANAGER podem cadastrar;
   STAFF apenas consulta. A autorizacao definitiva sempre e feita pelo backend.
 - O cadastro recebe nome, SKU, descricao opcional e preco em reais. Aceita virgula
@@ -69,6 +80,24 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
 Criacao de lojas e inclusao de membros continuam pela API/Swagger. Ainda nao
 existem telas para imagens, edicao/exclusao de produtos ou checkout.
+
+## Direcao de negocio e legado Murimel
+
+A area **Vendas** explica o fluxo comercial levantado nos fontes do Murimel:
+cliente/vendedor, grupos/subgrupos, descontos autorizados, pagamentos/parcelas,
+caixa, entrega/montagem e comissoes por grupo com excecoes por vendedor.
+**Ainda nao e um PDV**: nao grava vendas, calcula comissoes ou recebe pagamentos.
+Os atalhos levam apenas as operacoes existentes, sem formularios ficticios.
+
+O pedido interno continua sem cliente, vendedor comercial, pagamento ou
+comissao. O perfil STAFF continua sendo de consulta; nao e convertido em
+vendedor com permissao de escrita. Nenhuma API ou dado legado foi alterado
+ou importado nesta etapa.
+
+A analise estatica, seus pontos pendentes de validacao e as referencias dos
+fontes estao em [docs/murimel/architecture_index.md](docs/murimel/architecture_index.md).
+Ela nao certifica paridade de vendas: existem divergencias na base de comissao
+e na selecao de vendedor dos relatorios que exigem validacao com o negocio.
 
 ## Etapa 3 - estoque
 
@@ -167,15 +196,18 @@ Cobrem cadastro, login invalido, sessao apos reload, cookies, CSRF, ausencia do 
 logout e viewport movel. Nao rode contra producao.
 
 Os testes `query-*.spec.js`, `catalog.spec.js`, `inventory.spec.js`, `orders.spec.js`
-e `workspace-navigation.spec.js` validam a integracao do React Query no navegador
+e `workspace-navigation.spec.js` / `retail-workspace.spec.js` validam a integracao do React Query no navegador
 com API interceptada: sessao, CSRF, ausencia de requisicoes de mensagens, retries, erros e
 isolamento/cancelamento entre sessoes e lojas, papeis, precos decimais, paginacao,
 cadastro, estoque/historico, pedidos, cancelamento com estorno integral,
 resposta perdida com reenvio idempotente, navegacao por secao e layout movel.
+O recorte de varejo tambem verifica busca limitada a pagina, ausencia de
+escritas comerciais ficticias, preservacao do pedido ao visitar Vendas e
+layouts de 320, 390, 768 e 1280 pixels.
 Nao exigem backend:
 
 ```bash
-npm test -- e2e/orders.spec.js e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-isolation.spec.js
+npm test -- e2e/orders.spec.js e2e/inventory.spec.js e2e/catalog.spec.js e2e/query-session.spec.js e2e/query-isolation.spec.js e2e/workspace-navigation.spec.js e2e/retail-workspace.spec.js
 ```
 
 Esses testes nao substituem os testes HTTP do backend com bancos reais nem

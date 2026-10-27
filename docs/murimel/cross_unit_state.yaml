@@ -1,0 +1,41 @@
+flows:
+  - name: pending-sale-to-cashier
+    medium: database
+    key: "easy_vendas / easy_itens: codigo + venda"
+    writer: { unit: sales-pdv, source_loc: "Murimel/Easy200.prg:1558" }
+    reader: { unit: cashier, source_loc: "Murimel/Easy201.prg:1105" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: runtime
+    verification_hint: "Gravar pendente, reabrir no caixa, confirmar uma vez, verificar saldo e pagamentos."
+    notes: "Pareamento estatico; tipos, constraints e atomicidade requerem banco."
+  - name: group-to-detail
+    medium: database
+    key: "easy_grupo.comissao / comissao_loja"
+    writer: { unit: product-groups, source_loc: "Murimel/Easy161.prg:318" }
+    reader: { unit: commission-detail, source_loc: "Murimel/Easy650.Prg:453" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: runtime
+    verification_hint: "Comparar digitacao do vendedor com selecao na busca; confirmar significado do campo desconto."
+    notes: "Taxa lida na hora do relatorio; sem snapshot confirmado."
+  - name: group-to-summary
+    medium: database
+    key: "easy_grupo.comissao / comissao_loja"
+    writer: { unit: product-groups, source_loc: "Murimel/Easy161.prg:318" }
+    reader: { unit: commission-summary, source_loc: "Murimel/Easy651.Prg:344" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: runtime
+    verification_hint: "Conciliar com detalhado e pessoal usando casos aprovados pelo negocio."
+    notes: "Excecao zero faz fallback; ausencia de linha requer verificacao."
+  - name: group-to-personal
+    medium: database
+    key: easy_grupo.comissao
+    writer: { unit: product-groups, source_loc: "Murimel/Easy161.prg:318" }
+    reader: { unit: commission-personal, source_loc: "Murimel/Comissao.Prg:119" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: runtime
+    verification_hint: "Comparar percentual padrao com casos de excecao do vendedor."
+    notes: "Este relatorio nao usa a mesma resolucao de excecao dos outros dois."

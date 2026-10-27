@@ -1,0 +1,9 @@
+unit: commission-personal
+bindings:
+  - type: convention
+    name: "Comissao() / RelComissao()"
+    source_loc: "Murimel/Comissao.Prg:5"
+    target: "RelComissao"
+    must_appear_in_target: false
+    notes: "Consulta EasyCodVen da sessao legada; nao transportar autenticacao."
+runtime_config: []

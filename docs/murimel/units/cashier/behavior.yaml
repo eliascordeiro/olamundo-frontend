@@ -1,0 +1,26 @@
+unit: cashier
+side_effects:
+  - source_loc: "Murimel/Easy201.prg:840"
+    effect: "Confirma venda/itens, altera datas, baixa estoque pelo local de saida e substitui pagamentos."
+    must_preserve: true
+  - source_loc: "Murimel/Easy201.prg:3124"
+    effect: "Apos sucesso, pode abrir endereco, imprime PDV e limpa tela."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy201.prg:900"
+    condition: "Cancelamento autorizado de pendente ou confirmado."
+    behavior: "Pendente exclui registros; confirmado pode estornar saldo e marcar cancela X. Validar politica, nao reproduzir exclusao sem auditoria."
+    must_preserve: false
+error_paths:
+  - source_loc: "Murimel/Easy201.prg:3096"
+    trigger: "Modalidades com dados de parcelas faltantes."
+    outcome: "Mensagem e bloqueio da confirmacao."
+    contract: "Validacao em tela; nenhuma API HTTP."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: "Murimel/Easy201.prg:783"
+    scope: "Cabecalho, itens, saldo e pagamentos em queries sequenciais; transacao abrangente nao observada."
+    isolation: "Nao verificado."
+    must_preserve: false

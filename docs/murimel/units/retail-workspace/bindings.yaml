@@ -1,0 +1,9 @@
+unit: retail-workspace
+bindings:
+  - type: convention
+    name: "React section state + workspaceSections"
+    source_loc: "src/App.jsx:1"
+    target: "Workspace / StoreCatalog / RetailPages"
+    must_appear_in_target: true
+    notes: "Sem rotas de backend novas; catalogo continua inicial; troca de loja desmonta contexto anterior."
+runtime_config: []

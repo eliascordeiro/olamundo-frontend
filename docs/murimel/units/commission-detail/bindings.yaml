@@ -1,0 +1,9 @@
+unit: commission-detail
+bindings:
+  - type: convention
+    name: "Menu Comissoes / Detalhada"
+    source_loc: "Murimel/EasyControl.Prg:233"
+    target: "Easy650"
+    must_appear_in_target: false
+    notes: "Permissao iEasy650; PDF por COM Windows nao e contrato web."
+runtime_config: []

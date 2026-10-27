@@ -1,0 +1,30 @@
+unit: sales-pdv
+side_effects:
+  - source_loc: "Murimel/Easy200.prg:1558"
+    effect: "Grava itens snapshots, cabecalho pendente e pagamentos; itens guardam vendedor e locais/logistica."
+    must_preserve: true
+  - source_loc: "Murimel/Easy200.prg:4007"
+    effect: "Grava endereco por cliente/CEP e vincula CEP aos itens."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy200.prg:5326"
+    condition: "Adicionar produto ja presente ou alterar itens."
+    behavior: "Mesmo codigo substitui linha; recalcula totais e limpa pagamentos."
+    must_preserve: true
+  - source_loc: "Murimel/Easy200.prg:5559"
+    condition: "Desconto abaixo do permitido."
+    behavior: "Exige autorizacao; politica deve ser confirmada para API futura."
+    must_preserve: true
+error_paths:
+  - source_loc: "Murimel/Easy200.prg:1343"
+    trigger: "Itens/vendedor/datas/totais incompletos; datas logisticas invalidas."
+    outcome: "Mensagem e recusa da gravacao."
+    contract: "Validacoes comerciais, sem contrato HTTP no legado."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: "Murimel/Easy200.prg:1343"
+    scope: "Consultas sequenciais; transacao abrangente nao observada."
+    isolation: "Nao verificado."
+    must_preserve: false

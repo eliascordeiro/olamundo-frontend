@@ -1,0 +1,9 @@
+seams:
+  - id: "src/features/catalog/StoreCatalog.jsx:1"
+    description: "UX de varejo evolui; legado e contratos de backend ficam congelados nesta etapa."
+    source: declared
+    cut_between: { migrated_side: retail-workspace, frozen_side: sales-pdv }
+    protocol_shift: null
+    frozen_side_rule: "Nao alterar/executar o legado; nao importar dados; nao modificar APIs ou backend nesta entrega."
+    bridge_points: []
+    notes: "A mesma regra vale para cashier, product-groups e comissoes. Nao ha comunicacao Nexo-Murimel, ETL, adaptador nem dual-write."

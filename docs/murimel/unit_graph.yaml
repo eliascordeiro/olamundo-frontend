@@ -1,0 +1,58 @@
+scope: "Recorte estatico de vendas e comissoes; nao e o inventario completo do ERP."
+units:
+  - name: sales-pdv
+    trigger: page
+    trigger_detail: "Menu PDV -> Easy200(.F.)"
+    source_anchors: [{ path: Murimel/Easy200.prg, line: 10 }]
+    exported_signature: [{ method: "Easy200(_status)", source_loc: "Murimel/Easy200.prg:10", stability: must_preserve }]
+    dynamic_entrypoints: []
+    depends_on: [{ unit: commission-personal, via: "Botao de comissao do PDV" }]
+    shared_refs: [{ module: legacy-session-menu, used_fields: [CodLoja, oUsuario] }]
+  - name: cashier
+    trigger: page
+    trigger_detail: "Menu Caixa -> Easy201()"
+    source_anchors: [{ path: Murimel/Easy201.prg, line: 10 }]
+    exported_signature: [{ method: "Easy201()", source_loc: "Murimel/Easy201.prg:10", stability: must_preserve }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: legacy-session-menu, used_fields: [CodLoja] }]
+  - name: product-groups
+    trigger: page
+    trigger_detail: "Cadastro de grupos -> Easy161()"
+    source_anchors: [{ path: Murimel/Easy161.prg, line: 8 }]
+    exported_signature: [{ method: "Easy161()", source_loc: "Murimel/Easy161.prg:8", stability: must_preserve }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+  - name: commission-personal
+    trigger: page
+    trigger_detail: "Comissao() / RelComissao()"
+    source_anchors: [{ path: Murimel/Comissao.Prg, line: 5 }]
+    exported_signature: [{ method: "Comissao()", source_loc: "Murimel/Comissao.Prg:5", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: legacy-session-menu, used_fields: [EasyCodVen] }]
+  - name: commission-detail
+    trigger: page
+    trigger_detail: "Menu Comissoes / Detalhada -> Easy650()"
+    source_anchors: [{ path: Murimel/Easy650.Prg, line: 5 }]
+    exported_signature: [{ method: "Easy650()", source_loc: "Murimel/Easy650.Prg:5", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+  - name: commission-summary
+    trigger: page
+    trigger_detail: "Menu Comissoes / Resumida -> Easy651()"
+    source_anchors: [{ path: Murimel/Easy651.Prg, line: 5 }]
+    exported_signature: [{ method: "Easy651()", source_loc: "Murimel/Easy651.Prg:5", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []
+  - name: retail-workspace
+    trigger: page
+    trigger_detail: "SPA Nexo autenticada; menu de operacoes por loja."
+    source_anchors: [{ path: src/App.jsx, line: 1 }]
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: []

@@ -1,0 +1,21 @@
+unit: product-groups
+side_effects:
+  - source_loc: "Murimel/Easy161.prg:318"
+    effect: "Grava grupo/comissao/MK/descontos/NCM; alteracao do nome propaga nomegrupo aos produtos."
+    must_preserve: true
+  - source_loc: "Murimel/Easy161.prg:361"
+    effect: "Apaga excecoes do grupo e reinsere linhas com percentual maior que zero."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy161.prg:486"
+    condition: "Carregar grade de comissao especifica."
+    behavior: "comissao_loja.loja e unido ao codigo do vendedor."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: "Murimel/Easy161.prg:318"
+    scope: "Gravacao grupo e substituicao de excecoes por consultas separadas."
+    isolation: "Nao verificado."
+    must_preserve: false

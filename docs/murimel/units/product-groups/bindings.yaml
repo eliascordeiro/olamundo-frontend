@@ -1,0 +1,9 @@
+unit: product-groups
+bindings:
+  - type: convention
+    name: "Tela Grupo e grid_comissao"
+    source_loc: "Murimel/Easy161.prg:474"
+    target: "grid_comissao_loja"
+    must_appear_in_target: false
+    notes: "A intencao por vendedor importa; controle MiniGUI nao deve ser copiado."
+runtime_config: []

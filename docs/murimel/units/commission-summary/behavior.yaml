@@ -1,0 +1,17 @@
+unit: commission-summary
+side_effects:
+  - source_loc: "Murimel/Easy651.Prg:82"
+    effect: "Gera relatorio resumido por periodo/vendedor."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy651.Prg:206"
+    condition: "Campo desconto igual ou diferente de zero."
+    behavior: "Mesma base condicional observada no detalhado; validar significado antes da paridade."
+    must_preserve: false
+  - source_loc: "Murimel/Easy651.Prg:344"
+    condition: "Comissao especifica zero."
+    behavior: "Fallback para padrao; _loja pode receber codigo do vendedor ou loja conforme entrada."
+    must_preserve: false
+error_paths: []
+concurrency: { model: sync }
+unresolved: "Conciliar com detalhado e pessoal; nao congelar automaticamente a divergencia."

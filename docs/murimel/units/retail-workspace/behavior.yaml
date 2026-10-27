@@ -1,0 +1,21 @@
+unit: retail-workspace
+side_effects:
+  - source_loc: "src/features/catalog/StoreCatalog.jsx:74"
+    effect: "Reutiliza hooks de catalogo/estoque/pedidos por usuario e loja; selecao do pedido mantida no componente por loja."
+    must_preserve: true
+branches:
+  - source_loc: "src/features/catalog/StoreCatalog.jsx:74"
+    condition: "OWNER/MANAGER ou STAFF."
+    behavior: "Somente OWNER/MANAGER veem escrita; backend continua autorizando."
+    must_preserve: true
+  - source_loc: "src/features/retail/RetailPages.jsx:54"
+    condition: "Secao Vendas."
+    behavior: "Somente explicacao de preparacao e atalhos para operacoes existentes; nenhum formulario comercial."
+    must_preserve: true
+error_paths:
+  - source_loc: "src/features/catalog/StoreCatalog.jsx:118"
+    trigger: "Consulta de produtos falha."
+    outcome: "QueryError explicito; nao interpretar erro como resultado vazio."
+    contract: "HTTP existente; sem alteracao do backend."
+    must_preserve: true
+concurrency: { model: event-loop }

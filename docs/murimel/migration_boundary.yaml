@@ -1,0 +1,34 @@
+user_intent:
+  raw_request: "Repaginar frontend para varejo e analisar Murimel para futura paridade/migracao."
+  inferred_acceptance:
+    - "Usuario confirmou: repaginar agora, evoluir vendas em etapas."
+    - "Preservar catalogo, estoque, pedidos internos, autorizacao e isolamento."
+    - "Funcoes comerciais ainda nao implementadas explicitamente sinalizadas."
+  cleanup_required: false
+strategy: phased
+runtime_reachable:
+  - src/App.jsx
+  - src/features/catalog/StoreCatalog.jsx
+  - src/features/workspaceSections.js
+  - src/features/retail/RetailPages.jsx
+must_rewrite:
+  - path: src/App.jsx
+    reason: "Shell autenticado e apresentacao da rotina de varejo."
+  - path: src/features/catalog/StoreCatalog.jsx
+    reason: "Contexto da loja, busca local e encaminhamento das secoes existentes."
+  - path: src/features/workspaceSections.js
+    reason: "Navegacao distingue vendas em preparacao de pedidos internos."
+  - path: src/features/retail/RetailPages.jsx
+    reason: "Visao geral e apresentacao honesta do futuro fluxo de vendas."
+copy_as_is:
+  - src/api.js
+  - src/features/catalog/queries.js
+  - src/features/orders/queries.js
+  - src/features/inventory/queries.js
+legacy_allowed_to_remain:
+  - "Murimel/** (externo ao repositorio e intocado)"
+  - "Backend Spring e contratos existentes, sem mudancas nesta etapa"
+defer_cleanup:
+  - "Implementacao comercial e migracao de dados dependem de etapas aprovadas."
+full_rewrite_reason: null
+implementation_rule: "Source anchors sao evidencias; nao autorizam reescrever o legado, alterar backend ou importar dados."

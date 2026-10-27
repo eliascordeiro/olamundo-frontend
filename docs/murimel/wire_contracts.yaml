@@ -1,0 +1,106 @@
+contracts:
+  - name: pdv-persistence
+    unit: sales-pdv
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/Easy200.prg:1558"
+    contract:
+      request: "Itens snapshots, cabecalho e pagamentos; identificacao por cliente/venda/sequencia."
+      response: "Venda pendente, situacao X."
+      error: "MsgInfo em falha; atomicidade nao verificada."
+    target_contract:
+      method: "Nenhuma escrita comercial ou importacao nesta entrega."
+      notes: "Futura API depende de contrato aprovado; nao mapear automaticamente para pedidos internos."
+    semantic_divergence:
+      - field: venda
+        issue: "Numero obtido por cliente, nao identificador global."
+        source_loc: "Murimel/Easy200.prg:1820"
+  - name: cashier-persistence
+    unit: cashier
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/Easy201.prg:840"
+    contract:
+      request: "Confirmacao altera cabecalho/itens, baixa por lojasaida e substitui pagamentos."
+      response: "Situacao vazia; venda confirmada."
+      error: "MsgInfo; cancelamento autorizado separado."
+    target_contract:
+      method: "Caixa legado permanece independente, sem bridge nesta entrega."
+      notes: "Nao substituir a confirmacao atomica/idempotente do pedido atual."
+    semantic_divergence:
+      - field: emissao
+        issue: "Confirmacao reescreve data dos itens usada nos relatorios."
+        source_loc: "Murimel/Easy201.prg:849"
+  - name: group-commission-overrides
+    unit: product-groups
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/Easy161.prg:486"
+    contract:
+      request: "easy_grupo.comissao; comissao_loja(grupo,loja,comissao)."
+      response: "Grade junta comissao_loja.loja a easy_vendedor.codigo."
+      error: "Schema e cardinalidade nao verificados."
+    target_contract:
+      method: "Somente descricao da regra na UX; nao ha cadastro ou calculo comercial."
+      notes: "Validar excecao por vendedor e inconsistencias dos relatorios antes de projetar a API."
+    semantic_divergence:
+      - field: comissao_loja.loja
+        issue: "Nome sugere loja, mas cadastro relaciona vendedor."
+        source_loc: "Murimel/Easy161.prg:486"
+  - name: personal-commission-query
+    unit: commission-personal
+    type: sql
+    stability: may_change
+    source_loc: "Murimel/Comissao.Prg:88"
+    contract:
+      request: "Periodo, vendedor logado; itens confirmados e nao cancelados."
+      response: "Base preco x quantidade; percentual padrao do grupo."
+    target_contract:
+      method: "Relatorio nao implementado nesta etapa."
+      notes: "Conciliar exemplos com detalhado/resumido antes de definir regra unica."
+    semantic_divergence: []
+  - name: detailed-commission-query
+    unit: commission-detail
+    type: sql
+    stability: may_change
+    source_loc: "Murimel/Easy650.Prg:149"
+    contract:
+      request: "Periodo, vendedor, grupos e comissao_loja."
+      response: "Campo 12 = desconto; zero -> preco x qtde, nao zero -> proprio desconto; aplicar taxa."
+    target_contract:
+      method: "Sem calculo de comissao nesta entrega."
+      notes: "Base e selecao do vendedor exigem decisao do negocio, nao copia mecanica."
+    semantic_divergence:
+      - field: _loja
+        issue: "Digitacao recebe codigo; busca recebe coluna loja."
+        source_loc: "Murimel/Easy650.Prg:390"
+  - name: summary-commission-query
+    unit: commission-summary
+    type: sql
+    stability: may_change
+    source_loc: "Murimel/Easy651.Prg:141"
+    contract:
+      request: "Periodo, vendedor, grupos e comissao_loja."
+      response: "Base condicional do campo desconto e percentual especifico ou padrao."
+    target_contract:
+      method: "Sem calculo de comissao nesta entrega."
+      notes: "Nao certificar igualdade com relatorio pessoal."
+    semantic_divergence:
+      - field: _loja
+        issue: "Digitacao recebe codigo; busca recebe coluna loja."
+        source_loc: "Murimel/Easy651.Prg:299"
+  - name: current-frontend-api
+    unit: global
+    type: rest
+    stability: frozen
+    source_loc: "src/api.js:63"
+    contract:
+      path: "/api/stores/{storeId}/products; /api/stores/{storeId}/products/{productId}/stock; /api/stores/{storeId}/orders"
+      request: "Contratos existentes; escrita autenticada com CSRF; pedido recebe produtos/quantidades/requestId."
+      response: "Catalogo paginado; estoque; pedido interno com precos congelados pelo servidor."
+      error: "Erros explicitos; 401 encerra sessao; sem retry automatico de POST."
+      auth: "Cookies de sessao e CSRF; OWNER/MANAGER escrevem, STAFF consulta."
+    target_contract:
+      method: "Manter src/api.js e hooks existentes sem alteracao."
+      notes: "Nao enviar cliente, vendedor, pagamento, entrega ou comissao sem contrato backend."
+    semantic_divergence: []

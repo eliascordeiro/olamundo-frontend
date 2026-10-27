@@ -1,0 +1,13 @@
+modules:
+  - name: legacy-session-menu
+    kind: store
+    source_loc: "Murimel/EasyControl.Prg:71"
+    used_by_units: [sales-pdv, cashier, commission-personal]
+    fields:
+      - { name: CodLoja, type: "numeric; loja autenticada" }
+      - { name: EasyCodVen, type: "character; codigo do vendedor logado" }
+      - { name: oUsuario, type: "character; identificacao do usuario" }
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Registro contextual, nao autorizacao para copiar sessao/senhas. Demais helpers nao inventariados integralmente."

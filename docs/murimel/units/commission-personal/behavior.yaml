@@ -1,0 +1,13 @@
+unit: commission-personal
+side_effects:
+  - source_loc: "Murimel/Comissao.Prg:55"
+    effect: "Emite relatorio do vendedor logado por periodo."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Comissao.Prg:88"
+    condition: "Itens com situacao e cancela vazios."
+    behavior: "Inclui confirmados nao cancelados; grupo por primeiro digito do produto; padrao do grupo sobre preco x quantidade."
+    must_preserve: true
+error_paths: []
+concurrency: { model: sync }
+unresolved: "Diverge dos outros relatorios em base e excecao; nao escolher regra sem negocio."

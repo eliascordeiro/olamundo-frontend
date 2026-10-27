@@ -1,0 +1,9 @@
+unit: commission-summary
+bindings:
+  - type: convention
+    name: "Menu Comissoes / Resumida"
+    source_loc: "Murimel/EasyControl.Prg:234"
+    target: "Easy651"
+    must_appear_in_target: false
+    notes: "Permissao iEasy651; futuro acesso comercial precisa de contrato proprio."
+runtime_config: []

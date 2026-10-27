@@ -1,0 +1,9 @@
+unit: cashier
+bindings:
+  - type: convention
+    name: "Menu Caixa -> Easy201()"
+    source_loc: "Murimel/EasyControl.Prg:171"
+    target: "Easy201 / __grava_caixa"
+    must_appear_in_target: false
+    notes: "Entrada ativa; nao confundir com chamada comentada a Easy200(.T.)."
+runtime_config: []
