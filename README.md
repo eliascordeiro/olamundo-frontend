@@ -112,6 +112,17 @@ No Railway, publique primeiro o backend com a migracao V6 e depois este
 frontend. Nao sao necessarias novas variaveis. Valide o fluxo em uma loja
 de teste como OWNER e confirme negacao para MANAGER/STAFF.
 
+## Administracao da plataforma (Super)
+
+Uma conta marcada como Super no backend (`platformAdmin` em `/api/auth/me`) ve
+apenas o **console de proprietarios**, sem workspace de lojas. Lista
+proprietarios (incluindo **Móveis Murimel**, pendente), cadastra novos e emite
+convites. O link do convite aparece **uma unica vez** (valido por 7 dias, uso
+unico); nao ha envio de e-mail, entregue-o por canal seguro. O convidado abre
+`/?convite=...`, define nome e senha, e depois entra pelo login normal. O token
+e removido da barra de enderecos ao carregar. Se o e-mail ja tem conta, o
+proprietario e ativado sem convite. Nao importa dados do legado nem cria lojas.
+
 ## Direcao de negocio e legado Murimel
 
 A area **Vendas** explica o fluxo comercial levantado nos fontes do Murimel:

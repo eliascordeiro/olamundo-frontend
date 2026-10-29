@@ -94,3 +94,10 @@ export const updateSalesperson = (storeId, id, update) =>
   post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}`, update)
 export const linkSalesperson = (storeId, id, account) =>
   post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}/account`, account)
+
+export const getPlatformOwners = ({ page = 0, size = 20, signal } = {}) =>
+  request(`/api/platform/owners?page=${page}&size=${size}`, { signal })
+export const createPlatformOwner = (owner) => post('/api/platform/owners', owner)
+export const invitePlatformOwner = (id, email) =>
+  post(`/api/platform/owners/${encodeURIComponent(id)}/invite`, { email })
+export const acceptOwnerInvite = (invite) => post('/api/platform/invites/accept', invite)

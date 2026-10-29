@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { useLogin, useLogout, useRegister, useSession } from './queries'
 import StoreCatalog from './features/catalog/StoreCatalog'
+import PlatformConsole from './features/platform/PlatformConsole'
+import AcceptInvite from './features/platform/AcceptInvite'
 import workspaceSections from './features/workspaceSections'
 import Icon from './components/Icon'
 import './App.css'
@@ -172,13 +174,29 @@ function Workspace({ user }) {
   </div>
 }
 
+function readInviteToken() {
+  const params = new URLSearchParams(window.location.search)
+  const token = params.get('convite')
+  if (token === null) return ''
+  // Remove o token da barra de endereço para não vazar em histórico ou referrer.
+  params.delete('convite')
+  const query = params.toString()
+  window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`)
+  return token
+}
+
+const initialInviteToken = readInviteToken()
+
 function App() {
   const session = useSession()
   const user = session.data
   const checking = session.isPending || (session.isError && session.isFetching)
+  const [inviteToken, setInviteToken] = useState(initialInviteToken)
 
   if (checking || session.isError) return <main className="startup-screen"><Brand />{checking ? <p role="status"><span className="spinner" /> Preparando seu workspace...</p> : <><div className="alert alert-error" role="alert">{session.error.message}</div><button className="primary-button" onClick={() => session.refetch()}>Tentar novamente <Icon name="arrow" /></button></>}</main>
+  if (user?.platformAdmin) return <PlatformConsole key={user.id} user={user} />
   if (user) return <Workspace key={user.id} user={user} />
+  if (inviteToken) return <AcceptInvite token={inviteToken} onDone={() => setInviteToken('')} />
   return <main className="login-layout"><BusinessPanel /><AuthForm /></main>
 }
 

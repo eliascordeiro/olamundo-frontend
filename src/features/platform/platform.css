@@ -1,0 +1,27 @@
+.platform-console { min-height: 100vh; background: #f7faf6; }
+.platform-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 16px 24px; background: #fff; border-bottom: 1px solid #e1e9e2; }
+.platform-body { max-width: 960px; margin: 0 auto; padding: 32px 20px 64px; min-width: 0; }
+.platform-badge { padding: 6px 10px; border-radius: 20px; font-size: 12px; background: #e7f2e9; color: #235b39; }
+.platform-badge-pending { background: #f0eeea; color: #655b4b; }
+.platform-badge-invited { background: #fdf3d9; color: #7a5a0b; }
+.platform-list { list-style: none; padding: 0; margin: 18px 0; }
+.platform-list li { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 18px 0; border-bottom: 1px solid #e1e9e2; }
+.platform-person { flex: 1; min-width: 140px; overflow-wrap: anywhere; }
+.platform-person h3 { font-size: 15px; }
+.platform-person p { font-size: 12px; color: #64766a; margin-top: 6px; }
+.platform-form { margin-top: 20px; padding: 20px; border-radius: 12px; background: #fff; border: 1px solid #dfe8df; min-width: 0; }
+.platform-form h3 { font-size: 16px; margin-bottom: 14px; }
+.platform-form fieldset { border: 0; padding: 0; min-width: 0; }
+.platform-form label { display: block; font-size: 12px; font-weight: 600; color: #34463e; margin-bottom: 12px; }
+.platform-form input { display: block; width: 100%; min-width: 0; margin-top: 8px; border: 1px solid #dce3dd; border-radius: 8px; padding: 12px; background: #fff; color: #203d31; font: inherit; }
+.platform-form button { margin-top: 8px; }
+.platform-invite { margin-top: 18px; padding: 16px; border: 1px dashed #25614d; border-radius: 12px; background: #f1f7f2; overflow-wrap: anywhere; }
+.platform-invite code { display: block; margin: 10px 0; font-size: 12px; user-select: all; }
+.platform-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.invite-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: #f7faf6; }
+.invite-screen .platform-form { width: min(440px, 100%); }
+@media (max-width: 650px) {
+  .platform-header { padding: 12px 14px; }
+  .platform-form { padding: 14px; }
+  .platform-list li > button { width: 100%; }
+}
