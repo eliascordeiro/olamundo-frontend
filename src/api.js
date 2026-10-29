@@ -83,3 +83,14 @@ export const confirmOrder = (storeId, orderId) =>
   post(`${ordersPath(storeId)}/${encodeURIComponent(orderId)}/confirm`, {})
 export const cancelOrder = (storeId, orderId, cancellation) =>
   post(`${ordersPath(storeId)}/${encodeURIComponent(orderId)}/cancel`, cancellation)
+
+const salespeoplePath = (storeId) => `/api/stores/${encodeURIComponent(storeId)}/salespeople`
+export const getSalespeople = (storeId, { page = 0, size = 20, signal } = {}) =>
+  request(`${salespeoplePath(storeId)}?page=${page}&size=${size}`, { signal })
+export const getSalesperson = (storeId, id, { signal } = {}) =>
+  request(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}`, { signal })
+export const createSalesperson = (storeId, registration) => post(salespeoplePath(storeId), registration)
+export const updateSalesperson = (storeId, id, update) =>
+  post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}`, update)
+export const linkSalesperson = (storeId, id, account) =>
+  post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}/account`, account)

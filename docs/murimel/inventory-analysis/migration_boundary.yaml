@@ -1,0 +1,18 @@
+user_intent:
+  raw_request: "Analisar estoque, acesso ao banco e dados relacionados; complementar com login de vendedor, loja, permissoes e master antes da migracao."
+  inferred_acceptance:
+    - "Identificar programas, tabelas, relacionamentos e limites reais do destino."
+    - "Entregar analise persistente e recomendacoes, sem importar ou modificar a operacao."
+    - "Distinguir usuario autenticado, vendedor comercial, loja padrao, permissao delegada e proprietario real."
+  cleanup_required: false
+strategy: phased
+runtime_reachable: []
+must_rewrite: []
+copy_as_is: []
+legacy_allowed_to_remain:
+  - "Todo o Murimel, incluindo banco e configuracoes."
+  - "Backend/Frontend atuais, sem mudancas funcionais."
+defer_cleanup:
+  - "Importador, ampliacao do modelo e mudancas de APIs dependem de aprovacao."
+full_rewrite_reason: null
+implementation_rule: "Esta tarefa e somente analise. Anchors de fonte nao sao alvos de reescrita; nao executar nem conectar o legado."

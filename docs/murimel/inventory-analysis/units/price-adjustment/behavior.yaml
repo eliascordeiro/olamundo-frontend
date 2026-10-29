@@ -1,0 +1,15 @@
+unit: price-adjustment
+side_effects:
+  - source_loc: "Murimel/Easy165.Prg:203"
+    effect: "Atualiza venda = venda + venda/100*percentual por grupo e opcionalmente subgrupo."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy165.Prg:210"
+    condition: "Subgrupo selecionado ou somente grupo."
+    behavior: "Altera conjunto de produtos correspondente, nao saldos."
+    must_preserve: true
+error_paths: []
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy165.Prg:203", scope: "UPDATE em lote de precos; auditoria/versionamento nao observados.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Repetir percentual nao e idempotente. Importacao nao deve chamar reajuste."

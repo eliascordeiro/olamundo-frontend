@@ -1,0 +1,4 @@
+unit: master-credentials
+bindings:
+  - { type: convention, name: "Apoio / Usuarios Masters", source_loc: "Murimel/EasyControl.Prg:263", target: "EasySenha()", must_appear_in_target: false, notes: "Permissao especifica iMaster, nao proprietario formal da empresa." }
+runtime_config: []

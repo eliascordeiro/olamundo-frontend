@@ -1,0 +1,23 @@
+unit: receiving
+side_effects:
+  - source_loc: "Murimel/Easy301.Prg:746"
+    effect: "Grava linhas de entrada em easy_pedidos, altera custo/preco do produto e soma saldo no local."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy301.Prg:712"
+    condition: "Edicao de entrada existente (iExiste)."
+    behavior: "Subtrai quantidades antigas usando iLocal atual e substitui linhas; validar mudanca de local antes da migracao."
+    must_preserve: false
+  - source_loc: "Murimel/Easy301.Prg:773"
+    condition: "Calculo de custo medio."
+    behavior: "Considera saldos positivos do produto em varios locais e soma custo da nova entrada."
+    must_preserve: true
+error_paths:
+  - source_loc: "Murimel/Easy301.Prg:674"
+    trigger: "Fornecedor, nota, data de nota ou local nao informados."
+    outcome: "Mensagem e recusa da gravacao."
+    contract: "UI desktop."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy301.Prg:655", scope: "Estorno, substituicao de linhas, custo/preco e saldo em queries separadas.", isolation: "Nao verificada.", must_preserve: false }

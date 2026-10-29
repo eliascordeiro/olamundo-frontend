@@ -1,0 +1,5 @@
+unit: salespeople-access
+bindings:
+  - { type: convention, name: "Cadastro de Vendedores", source_loc: "Murimel/EasyControl.Prg:148", target: "Easy120()", must_appear_in_target: false, notes: "Gate iEasy120; nao confundir com checkbox rotulado Vendedores (i130) nem com master." }
+  - { type: convention, name: "Permissoes de Vendedores", source_loc: "Murimel/Easy120.prg:340", target: "Permissoes()/MontaCheck()/GravaVendedor()", must_appear_in_target: false, notes: "Preservar configurabilidade por funcao; backend do destino deve autorizar cada acao, nao so esconder menu." }
+runtime_config: []

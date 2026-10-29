@@ -1,0 +1,24 @@
+unit: master-credentials
+side_effects:
+  - source_loc: "Murimel/EasySenha.Prg:181"
+    effect: "Grava usuario e credencial de autorizacao em easy_senha, separados do registro easy_vendedor."
+    must_preserve: false
+branches:
+  - source_loc: "Murimel/EasyControl.Prg:263"
+    condition: "iMaster=1."
+    behavior: "Permite abrir cadastro Usuarios Masters. Nao e prova de propriedade da loja nem override geral dos gates iEasy."
+    must_preserve: false
+  - source_loc: "Murimel/EasyControl.Prg:768"
+    condition: "PedeSenha/LiberaSenha recebe credencial."
+    behavior: "Busca easy_senha pela senha e retorna lOk; nesse fluxo nao associa um usuario master nominal ao ato."
+    must_preserve: false
+error_paths:
+  - source_loc: "Murimel/EasySenha.Prg:198"
+    trigger: "Falha SQL ao gravar autorizador."
+    outcome: "Mensagem e retorno."
+    contract: "Nao criar OWNER a partir desta tabela ou copiar credenciais. Identificar responsavel nominal antes de autorizar no destino."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/EasySenha.Prg:181", scope: "Cadastro separado; nenhuma concessao de membership/ownership observada.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Preservar necessidade de aprovacao comercial, mas substituir credencial compartilhada por identidade, permissao, motivo e auditoria nominal apos aprovacao de projeto."

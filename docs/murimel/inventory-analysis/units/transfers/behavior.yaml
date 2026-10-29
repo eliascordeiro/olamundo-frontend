@@ -1,0 +1,27 @@
+unit: transfers
+side_effects:
+  - source_loc: "Murimel/Easy164.prg:637"
+    effect: "Insere documento de transferencia com produto, locais documentais, qtde, data, numero, nota, valores e indicador."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy164.prg:639"
+    condition: "iBaixa marcado."
+    behavior: "Debita origem e soma/cria saldo destino; desmarcado registra documento sem esses movimentos."
+    must_preserve: true
+  - source_loc: "Murimel/Easy164.prg:600"
+    condition: "Usuario loja 4/5 seleciona local 05."
+    behavior: "Documento conserva 05; local usado no saldo vira 2. Necessario mapa comercial aprovado."
+    must_preserve: false
+  - source_loc: "Murimel/Easy164.prg:856"
+    condition: "Excluir transferencia."
+    behavior: "Apaga documento por numero, sem estorno explicito nessa funcao."
+    must_preserve: false
+error_paths:
+  - source_loc: "Murimel/Easy164.prg:551"
+    trigger: "Quantidade maior que saldo no validador de celula."
+    outcome: "Mensagem de saldo insuficiente."
+    contract: "UI; nao comprova trava transacional ou impedimento de corrida."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy164.prg:600", scope: "Documento, debito e credito separados; transacao abrangente nao observada.", isolation: "Nao verificada.", must_preserve: false }

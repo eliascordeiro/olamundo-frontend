@@ -1,0 +1,7 @@
+unit: legacy-login
+commit: false
+candidate_splits:
+  - id: "Murimel/EasyControl.Prg:546"
+    drivers: [concern_split, data_ownership_split]
+    rationale: "O registro de vendedor reune identidade de acesso, loja padrao e permissoes; a venda ainda distingue operador de vendedor comissionado."
+    source_slice: { file: Murimel/EasyControl.Prg, lines: [546, 649] }

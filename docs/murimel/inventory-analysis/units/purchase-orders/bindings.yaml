@@ -1,0 +1,4 @@
+unit: purchase-orders
+bindings:
+  - { type: convention, name: "Entradas/Pedidos -> Pedidos", source_loc: "Murimel/EasyControl.Prg:174", target: "Easy300()", must_appear_in_target: false, notes: "Permissao iEasy300 e identidade do fornecedor, nao cliente." }
+runtime_config: []

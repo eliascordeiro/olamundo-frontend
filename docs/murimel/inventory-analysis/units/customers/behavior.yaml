@@ -1,0 +1,20 @@
+unit: customers
+side_effects:
+  - source_loc: "Murimel/Easy100.prg:766"
+    effect: "Grava cliente comercial, documentos, contatos, endereco e dados de credito."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy100.prg:868"
+    condition: "iServidor habilitado."
+    behavior: "Tambem escreve cliente via iServer; transacao distribuida ou consistencia entre bases nao comprovadas."
+    must_preserve: false
+error_paths:
+  - source_loc: "Murimel/Easy100.prg:861"
+    trigger: "Falha SQL da escrita primaria."
+    outcome: "Mensagem e retorno."
+    contract: "UI desktop; dados pessoais nao devem aparecer em logs de migracao."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy100.prg:854", scope: "Escrita primaria e secundaria condicional; nenhuma transacao distribuida observada.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Reaproveitar cadastro comercial com finalidade/retencao aprovadas; nao criar conta de acesso para cada cliente."

@@ -1,0 +1,27 @@
+unit: legacy-login
+side_effects:
+  - source_loc: "Murimel/EasyControl.Prg:565"
+    effect: "Hidrata EasyCodVen, CodLoja e oUsuario a partir do usuario-vendedor autenticado."
+    must_preserve: true
+  - source_loc: "Murimel/EasyControl.Prg:569"
+    effect: "Carrega flags individuais de cadastro, estoque, venda, caixa, compras, relatorios e ferramentas para o menu."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/EasyControl.Prg:555"
+    condition: "Codigo do vendedor e senha informados."
+    behavior: "Consulta easy_vendedor; nao e login na tabela easy_senha de masters."
+    must_preserve: true
+  - source_loc: "Murimel/EasyControl.Prg:639"
+    condition: "Login aceito."
+    behavior: "Resolve nome/cidade/UF de easy_loja a partir de CodLoja."
+    must_preserve: true
+error_paths:
+  - source_loc: "Murimel/EasyControl.Prg:557"
+    trigger: "Consulta de login sem resultado."
+    outcome: "Mensagem de dados que nao conferem; permanece na janela de login."
+    contract: "Nao migrar comparacao de senha via SQL nem mensagens contendo dados de acesso."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/EasyControl.Prg:546", scope: "Leitura e estado global da sessao desktop; nao e sessao HTTP ou transacao de migracao.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Preservar identidade e escopo autorizado, nao globais de processo ou credenciais antigas. DDL necessario para validar indices de FieldGet."

@@ -1,0 +1,7 @@
+unit: customers
+commit: false
+candidate_splits:
+  - id: "Murimel/Easy100.prg:766"
+    drivers: [concern_split, data_ownership_split]
+    rationale: "Cadastro comercial contem contatos/endereco e dados de credito com finalidades diferentes; migracao deve preservar vinculos e limitar exposicao."
+    source_slice: { file: Murimel/Easy100.prg, lines: [766, 884] }

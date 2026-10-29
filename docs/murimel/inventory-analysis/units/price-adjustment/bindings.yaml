@@ -1,0 +1,4 @@
+unit: price-adjustment
+bindings:
+  - { type: convention, name: "Menu Altera Precos, permissao iEasy165", source_loc: "Murimel/EasyControl.Prg:161", target: "Easy165()", must_appear_in_target: false, notes: "Preservar capacidade comercial, nao reajuste automatico durante carga." }
+runtime_config: []

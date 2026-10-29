@@ -1,0 +1,30 @@
+unit: products
+side_effects:
+  - source_loc: "Murimel/Easy163.prg:492"
+    effect: "Grava produto compartilhado: descricao, custo/venda, MK, codigo fabricante, montagem, link, observacao, CFOP e descontos."
+    must_preserve: true
+  - source_loc: "Murimel/Easy163.prg:531"
+    effect: "Alterar descricao reescreve descricao nos itens de venda, compra e transferencia."
+    must_preserve: false
+  - source_loc: "Murimel/Easy163.prg:548"
+    effect: "Apaga saldos do produto e reinsere primeiras 10 linhas da grade; nao produz journal de ajustes."
+    must_preserve: false
+branches:
+  - source_loc: "Murimel/Easy163.prg:676"
+    condition: "Carregar saldos."
+    behavior: "Lista por produto/local; sem registros, lista lojas."
+    must_preserve: true
+  - source_loc: "Murimel/Easy163.prg:725"
+    condition: "Recalcular preco a partir do custo."
+    behavior: "Consulta margem do subgrupo e aplica ao custo."
+    must_preserve: true
+error_paths:
+  - source_loc: "Murimel/Easy163.prg:725"
+    trigger: "Grupo/subgrupo invalido."
+    outcome: "Mensagem e limpeza da tela."
+    contract: "UI desktop."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy163.prg:492", scope: "Produto, propagacao de descricao e substituicao de saldos em queries separadas.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Migrar dados sem reaplicar efeitos dos formularios; preservar codigo antigo e descricao completa."

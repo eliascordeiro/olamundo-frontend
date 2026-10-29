@@ -1,0 +1,91 @@
+flows:
+  - name: classificacao-e-preco
+    medium: database
+    key: "easy_subgrupo(codgrupo,codsubgrupo).margem"
+    writer: { unit: subgroups, source_loc: "Murimel/Easy162.prg:243" }
+    reader: { unit: products, source_loc: "Murimel/Easy163.prg:725" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Conferir margem, custo e preco fotografados; importar nao deve recalcular."
+  - name: pedido-e-entrada
+    medium: database
+    key: "easy_pedidos(codigo fornecedor,pedido,linhas)"
+    writer: { unit: purchase-orders, source_loc: "Murimel/Easy300.Prg:598" }
+    reader: { unit: receiving, source_loc: "Murimel/Easy301.Prg:271" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Separar previsto/recebido e notas parciais conforme dados reais; nao contar ambos como nova entrada."
+  - name: saldo-entrada-transferencia
+    medium: database
+    key: "easy_lojasaldo(codpro,codloja)"
+    writer: { unit: receiving, source_loc: "Murimel/Easy301.Prg:753" }
+    reader: { unit: transfers, source_loc: "Murimel/Easy164.prg:551" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Conciliar por produto/local, incluindo alias documental 05/2."
+  - name: preco-reajustado
+    medium: database
+    key: easy_produtos.venda
+    writer: { unit: price-adjustment, source_loc: "Murimel/Easy165.Prg:210" }
+    reader: { unit: products, source_loc: "Murimel/Easy163.prg:595" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: null
+    verification_hint: "Comparar valores de fotografia unica, nao regenerar preco pela margem."
+  - name: sessao-local-de-transferencia
+    medium: static
+    key: codLoja
+    writer: { unit: legacy-login, source_loc: "Murimel/EasyControl.Prg:566" }
+    reader: { unit: transfers, source_loc: "Murimel/Easy164.prg:612" }
+    pairing: matched
+    must_preserve: false
+    must_confirm: runtime
+    verification_hint: "Em ambiente aprovado confirmar qual empresa/base/sessao ativa o alias 05 -> 2; nao executar o legado nesta analise."
+  - name: cliente-em-base-secundaria
+    medium: database
+    key: "iServer.easy_cliente(codigo)"
+    writer: { unit: customers, source_loc: "Murimel/Easy100.prg:868" }
+    reader: { unit: external, source_loc: "Murimel/EasyControl.Prg:519" }
+    pairing: unmatched-writer
+    must_preserve: false
+    must_confirm: runtime
+    verification_hint: "Confirmar base oficial, seletor iServidor e divergencias entre copias; nao deduplicar so por codigo/nome."
+  - name: usuario-vendedor-hidratado-no-login
+    medium: database
+    key: "easy_vendedor(codigo).loja,vendedor,flags"
+    writer: { unit: salespeople-access, source_loc: "Murimel/Easy120.prg:463" }
+    reader: { unit: legacy-login, source_loc: "Murimel/EasyControl.Prg:555" }
+    pairing: matched
+    must_preserve: true
+    must_confirm: runtime
+    verification_hint: "Validar DDL e leitura por coluna nomeada; INSERT posicional difere dos indices esperados para i503/i301 e seguintes. Verificar em copia autorizada, sem executar legado nesta etapa."
+  - name: delegacao-do-cadastro-de-vendedores
+    medium: static
+    key: iEasy120
+    writer: { unit: legacy-login, source_loc: "Murimel/EasyControl.Prg:571" }
+    reader: { unit: salespeople-access, source_loc: "Murimel/EasyControl.Prg:148" }
+    pairing: matched
+    must_preserve: false
+    must_confirm: null
+    verification_hint: "Nao importar esse bit como autorizacao de administrar novos acessos sem revisao do proprietario."
+  - name: gate-cadastro-masters
+    medium: static
+    key: iMaster
+    writer: { unit: legacy-login, source_loc: "Murimel/EasyControl.Prg:587" }
+    reader: { unit: master-credentials, source_loc: "Murimel/EasyControl.Prg:263" }
+    pairing: matched
+    must_preserve: false
+    must_confirm: null
+    verification_hint: "Nao inferir OWNER a partir de iMaster; proprietario real exige confirmacao nominal independente."
+  - name: vendedor-comissionado-na-venda
+    medium: database
+    key: "easy_vendedor.codigo,loja -> vendedor selecionado na venda"
+    writer: { unit: salespeople-access, source_loc: "Murimel/Easy120.prg:463" }
+    reader: { unit: external, source_loc: "Murimel/Easy200.prg:3086" }
+    pairing: unmatched-writer
+    must_preserve: true
+    must_confirm: runtime
+    verification_hint: "PDV consulta vendedores da loja e grava selecionado; operador oUsuario e vendedor comissionado podem divergir. Vincular analise anterior de vendas, sem supor sempre o usuario logado."

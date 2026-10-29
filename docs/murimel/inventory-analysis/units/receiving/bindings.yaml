@@ -1,0 +1,4 @@
+unit: receiving
+bindings:
+  - { type: convention, name: "Entradas/Pedidos -> Entradas", source_loc: "Murimel/EasyControl.Prg:175", target: "Easy301()", must_appear_in_target: false, notes: "Permissao iEasy301; efeito de recebimento separado de pedido previsto." }
+runtime_config: []

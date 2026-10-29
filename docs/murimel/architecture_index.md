@@ -6,6 +6,11 @@ importacao de dados, leitura de credenciais ou certificacao de paridade.
 Escopo: PDV, caixa ativo, grupos e os tres caminhos de relatorio de comissao.
 Nao e um inventario completo do ERP.
 
+Analise complementar:
+[estoque, clientes e adaptacao de dados](inventory-analysis/architecture_index.md).
+Esse recorte posterior nao altera a fronteira da repaginacao descrita aqui
+nem autoriza importacao ou mudancas no legado.
+
 Raiz dos fontes citados como `Murimel/`:
 `/media/araudata/829AE33A9AE328FD1/SISTEMAS_MINIGUI_XHARBOUR/Murimel/`.
 Os arquivos PRG foram lidos como Windows-1252; numeros de linha referem-se

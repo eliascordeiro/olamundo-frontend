@@ -1,0 +1,20 @@
+unit: subgroups
+side_effects:
+  - source_loc: "Murimel/Easy162.prg:220"
+    effect: "Grava chave composta grupo/subgrupo, nome, MK, margem e descontos."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy162.prg:244"
+    condition: "Alteracao de subgrupo existente."
+    behavior: "Recalcula venda dos produtos como custo + custo/100*margem."
+    must_preserve: true
+error_paths:
+  - source_loc: "Murimel/Easy162.prg:249"
+    trigger: "Falha na gravacao SQL."
+    outcome: "Mensagem e retorno; preco e cadastro sao queries separadas."
+    contract: "UI desktop."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy162.prg:220", scope: "Cadastro e preco em queries distintas; transacao nao observada.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Preservar capacidade de politica/reajuste; importacao nao deve disparar recalculo."

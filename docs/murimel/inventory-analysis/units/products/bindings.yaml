@@ -1,0 +1,5 @@
+unit: products
+bindings:
+  - { type: convention, name: "Menu Produtos, permissao iEasy163", source_loc: "Murimel/EasyControl.Prg:158", target: "Easy163()", must_appear_in_target: false, notes: "MostraSaldo e editavel; equivalente futuro deve manter auditoria de ajustes." }
+  - { type: convention, name: "Codigo composto exibido e descricao 4x45", source_loc: "Murimel/Easy163.prg:492", target: "GravaProdutos", must_appear_in_target: false, notes: "Preservar identidade e conteudo, nao limites de layout Windows." }
+runtime_config: []

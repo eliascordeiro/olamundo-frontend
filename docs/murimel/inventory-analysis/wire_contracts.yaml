@@ -1,0 +1,114 @@
+contracts:
+  - name: identidade-e-permissoes-legadas
+    unit: legacy-login
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/EasyControl.Prg:546"
+    contract:
+      request: "Codigo do vendedor e credencial; consulta easy_vendedor."
+      response: "Identidade de vendedor, loja padrao e flags de modulo/funcao na sessao."
+      error: "Dados que nao conferem mantem usuario na janela."
+    target_contract:
+      method: "Somente correspondencia de identidade e proposta de permissoes nesta entrega; sem importador ou mudanca de login."
+      notes: "Preservar codigo antigo, empresa/base e loja para correspondencia; contas atuais usam email e hash BCrypt. Exigir ativacao/redefinicao individual sem copiar senha legada."
+    semantic_divergence:
+      - { field: i120/i130, issue: "Tela rotula i120 como Lojas e i130 como Vendedores; menu faz o inverso. Usar campo e gate real com aprovacao nominal.", source_loc: "Murimel/Easy120.prg:357" }
+      - { field: flags-posicionais, issue: "INSERT coloca ii503 na posicao 39; VerLogin/MontaCheck esperam i301 no indice 39 e i503 no 48. Necessario DDL e diagnostico por nomes.", source_loc: "Murimel/Easy120.prg:534" }
+  - name: master-nao-e-proprietario
+    unit: master-credentials
+    type: sql
+    stability: may_change
+    source_loc: "Murimel/EasyControl.Prg:768"
+    contract:
+      request: "Senha de autorizacao consultada em easy_senha, separada do login de vendedor."
+      response: "Booleano lOk; fluxo observado nao identifica aprovador nominal."
+    target_contract:
+      method: "Nenhuma credencial easy_senha e importada; autorizadores futuros exigem conta nominal e permissoes aprovadas."
+      notes: "iMaster permite abrir cadastro de masters; nao significa OWNER nem acesso universal. Guardar somente evidencia nao secreta necessaria ao mapeamento."
+    semantic_divergence: []
+  - name: autorizacao-atual-por-loja
+    unit: global
+    type: sdk
+    stability: frozen
+    source_loc: "backend/src/main/java/com/example/olamundo/stores/application/StoreAuthorization.java:17"
+    contract:
+      method: "requireMember/requireOwner/requireCatalogWriter/requireStockWriter/requireOrderWriter"
+      request: "storeId UUID e userId de conta autenticada."
+      response: "OWNER administra membros; OWNER/MANAGER escrevem catalogo/estoque/pedidos; membros consultam."
+      error: "404 para loja sem membership, 403 para acao sem papel suficiente."
+    target_contract:
+      method: "Sem alteracao funcional nesta analise."
+      notes: "Nao promover vendedor para MANAGER para contornar falta de permissoes granulares. Um bit legado nao tem equivalencia geral com um desses papeis."
+    semantic_divergence: []
+  - name: SQL-do-legado
+    unit: global
+    type: sql
+    stability: frozen
+    source_loc: "Murimel/EasyControl.Prg:465"
+    contract:
+      method: "oServer:Query(cQuery)"
+      request: "SELECT/INSERT/UPDATE/DELETE montados pelos formularios."
+      response: "Objeto de resultado, GetRow/FieldGet/LastRec/NetErr."
+      error: "Mensagens na interface; nenhuma promessa de atomicidade entre queries."
+      auth: "Conexao e permissoes desktop; valores de acesso omitidos."
+    target_contract:
+      method: "Nenhuma escrita ou ponte executavel autorizada nesta analise."
+      notes: "Futura extracao deve ser somente leitura, em copia consistente aprovada, com colunas explicitas apos obter DDL; nao chamar formularios."
+    semantic_divergence:
+      - { field: datas, issue: "MySQL pode conter data zero, que nao e uma data PostgreSQL valida; preservar original e classificar pendencia.", source_loc: "Murimel/Easy301.Prg:720" }
+      - { field: texto, issue: "Fonte lida como Windows-1252; charset/collation real do banco ainda desconhecido.", source_loc: "Murimel/Easy163.prg:495" }
+  - name: produto-compartilhado-e-saldos
+    unit: products
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/Easy163.prg:686"
+    contract:
+      request: "easy_produtos.codigo -> easy_lojasaldo.codpro; codloja -> easy_loja.codigo."
+      response: "Produto com saldos por local; sem prova de constraint de unicidade no banco legado."
+    target_contract:
+      method: "Mapeamento de identidade apenas; nao existe importador aprovado."
+      notes: "Preservar sistema/empresa de origem, codigo bruto e mapa de UUID por loja/local; nunca juntar empresas distintas pelo mesmo codigo."
+    semantic_divergence:
+      - { field: descricao, issue: "Origem 4x45; destino name ate 120. Preservar integral, escolher apresentacao ou ampliacao antes de importar.", source_loc: "Murimel/Easy163.prg:495" }
+      - { field: quantity, issue: "Destino integer nao negativo; qualquer negativo/fracao/overflow deve ser medido e tratado explicitamente.", source_loc: "backend/src/main/resources/db/migration/V3__create_inventory.sql:1" }
+  - name: local-documental-versus-fisico
+    unit: transfers
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/Easy164.prg:600"
+    contract:
+      request: "Origem/destino mostrados na tela; codLoja da sessao; opcao iBaixa."
+      response: "Documento pode ter locais diferentes dos codigos usados no debito/credito."
+    target_contract:
+      method: "Tabela de correspondencia aprovada de locais, sem executar transferencia historica."
+      notes: "Guardar local bruto documental e local de saldo resolvido separadamente; local ambiguo bloqueia conciliacao."
+    semantic_divergence:
+      - { field: local05, issue: "Para sessao codLoja 4/5, local mostrado 05 usa saldo 2; finalidade empresarial nao confirmada.", source_loc: "Murimel/Easy164.prg:612" }
+  - name: compras-e-recebimentos
+    unit: receiving
+    type: sql
+    stability: must_preserve
+    source_loc: "Murimel/Easy301.Prg:655"
+    contract:
+      request: "easy_pedidos identifica fornecedor/pedido ou fornecedor/nota, com linhas."
+      response: "Mesmo conjunto de tabelas comporta previsao e entrada."
+    target_contract:
+      method: "Classificacao em staging; nao mapear para sales_orders."
+      notes: "Preservar documentos e pendencias; quantidade fisica importada por abertura conciliada, sem reexecutar entradas antigas."
+    semantic_divergence: []
+  - name: estoque-atual
+    unit: global
+    type: rest
+    stability: frozen
+    source_loc: "backend/src/main/java/com/example/olamundo/inventory/api/InventoryController.java:32"
+    contract:
+      method: "GET saldo; GET /movements; POST /movements"
+      path: "/api/stores/{storeId}/products/{productId}/stock"
+      request: "POST: requestId UUID, type IN|OUT, quantity inteira positiva, reason 2..500."
+      response: "StockBalance ou StockMovement; historico paginado."
+      error: "400 para entrada invalida, 404 para loja/produto inacessivel, 403 para escrita nao permitida, 409 para saldo insuficiente ou repeticao divergente."
+      auth: "Conta autenticada, membership; OWNER/MANAGER escrevem; CSRF na escrita."
+    target_contract:
+      method: "InventoryService.move(UUID, UUID, String, UUID, MovementType, BigDecimal, String)"
+      notes: "Preservar API, bloqueio, transacao, isolamento e idempotencia. Nao usa-la para reprocessar vendas historicas."
+    semantic_divergence: []

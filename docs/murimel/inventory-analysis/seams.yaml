@@ -1,0 +1,59 @@
+seams:
+  - id: "Murimel/Easy120.prg:463"
+    description: "Candidato de extracao de identidades e intencao de acesso sem importar credenciais ou poderes administrativos automaticamente."
+    source: inferred
+    cut_between:
+      migrated_side: "Futuro mapeamento vendedor/conta/membership/permissoes, ainda nao implementado."
+      frozen_side: "Login e cadastros de acesso do legado."
+    protocol_shift: { from: "Usuario-vendedor MySQL com flags", to: "Conta MongoDB e autorizacao PostgreSQL por loja" }
+    frozen_side_rule: "Nao alterar usuarios, senhas, flags ou vinculos do legado; nenhum importador pode conceder novos acessos por inferencia."
+    bridge_points:
+      - at: "Extracao de easy_vendedor e vinculos comerciais."
+        from_form: "Codigo, loja, vendedor e flags nomeadas, excluindo credencial."
+        to_form: "Identidade comercial de origem, conta nominal verificada quando houver e concessoes pendentes de aprovacao."
+        mapping_rule: "Identificar origem/empresa/base+codigo vendedor; resolver loja por mapa aprovado; preservar vendedor historico mesmo sem login ativo. Conceder membership/permissoes somente apos aprovacao do proprietario confirmado fora de iMaster/easy_senha; nao criar OWNER automaticamente."
+        edge_cases:
+          - "Sem email verificado, preservar cadastro comercial sem acesso ativo; nao inventar email."
+          - "Mesmo nome, codigos em bases diferentes, funcionario de varias lojas e ex-funcionario nao implicam uma conta automaticamente."
+          - "Flags sem equivalente, rotulo trocado ou coluna incerta permanecem pendentes/negadas no novo sistema, com motivo visivel."
+        idempotency_retry: "Correspondencia unica por origem e codigo; reensaio nao cria contas/memberships duplicados nem restaura permissao revogada."
+        fallback: "Ambiguidade impede ativacao daquele acesso e aparece no relatorio de conciliacao; nao promover para MANAGER como alternativa."
+        must_preserve: true
+  - id: "Murimel/EasyControl.Prg:465"
+    description: "Candidato de extracao em fotografia consistente, sem alterar o sistema legado."
+    source: inferred
+    cut_between:
+      migrated_side: "Futuro importador, nao implementado nem aprovado nesta analise."
+      frozen_side: "Murimel, banco(s) e configuracoes."
+    protocol_shift: { from: "MySQL SQL/charset da origem", to: "Staging restrito/UTF-8 e depois PostgreSQL" }
+    frozen_side_rule: "Nao modificar fontes, dados, configuracoes ou politicas do legado. Extracao so apos autorizacao de acesso/copia."
+    bridge_points:
+      - at: "Fotografia das tabelas comerciais."
+        from_form: "Linhas MySQL com chaves, textos, datas e valores originais."
+        to_form: "Linhas de staging com origem, chave bruta, lote, hash, status de validacao e correspondencia de UUID."
+        mapping_rule: "Guardar origem/empresa+tabela+chave original; converter charset comprovado para UTF-8 sem perda; manter numero como decimal e codigo como texto. Nao chamar GravaProdutos/GravaEntrada/GravaCrediario."
+        edge_cases:
+          - "Datas zero, chaves ausentes, duplicadas ou local ambiguo ficam em pendencia explicita."
+          - "INSERT posicional nao e schema: exigir DDL e colunas explicitas."
+        idempotency_retry: "Lote e fotografia tem manifest; identidade logica de origem nao inclui numero de tentativa. Repetir mesmo hash nao duplica; alteracao exige revisao explicita."
+        fallback: "Erro interrompe fase ou registra rejeicao visivel; nenhuma escrita no legado, nenhuma carga parcial liberada como completa."
+        must_preserve: true
+  - id: "backend/src/main/java/com/example/olamundo/orders/application/OrderService.java:84"
+    description: "Separar arquivo historico de operacoes que movimentam estoque atual."
+    source: inferred
+    cut_between:
+      migrated_side: "Futuro armazenamento/consulta de historico importado."
+      frozen_side: "Contratos atuais de confirmacao/cancelamento e movimentacao."
+    protocol_shift: null
+    frozen_side_rule: "Nao alterar garantias atuais de pedido/estoque para acomodar documentos antigos; historico importado nao chama confirm/cancel."
+    bridge_points:
+      - at: "Carga de documentos historicos e saldo de abertura."
+        from_form: "Vendas, compras e transferencias anteriores ao corte."
+        to_form: "Historico consultavel separado, mais abertura de estoque reconciliada."
+        mapping_rule: "Preservar status, origem e valores dos documentos sem gerar IN/OUT historicos; criar somente abertura autorizada para o saldo no corte, ajustada ao saldo preexistente do destino segundo conciliacao aprovada."
+        edge_cases:
+          - "Pendentes e documentos abertos exigem migracao operacional ou continuacao explicitamente combinada."
+          - "Nao somar cegamente saldo importado ao estoque que ja existe no destino."
+        idempotency_retry: "Chave unica de documento de origem e de abertura/local/produto; mesmo conteudo nao duplica; divergencia bloqueia."
+        fallback: "Sem reconciliacao, manter modulo/lote em homologacao; nao promover o corte."
+        must_preserve: true

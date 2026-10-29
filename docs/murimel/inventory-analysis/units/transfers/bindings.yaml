@@ -1,0 +1,4 @@
+unit: transfers
+bindings:
+  - { type: convention, name: "Menu Transferencias, permissao iEasy164", source_loc: "Murimel/EasyControl.Prg:160", target: "Easy164()", must_appear_in_target: false, notes: "Permissoes de lojas especiais nao devem ser copiadas como numeros fixos." }
+runtime_config: []

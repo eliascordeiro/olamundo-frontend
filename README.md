@@ -53,7 +53,7 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 - O workspace lista as lojas da conta em paginas de 20, com **Carregar mais lojas**.
   A selecao e explicita e nao e persistida entre reloads ou sessoes.
 - A navegacao agrupa **Visao geral**, **Vendas** (em preparacao), **Catalogo**,
-  **Estoque** e **Pedidos internos**. Em telas grandes, o menu lateral acompanha
+  **Estoque**, **Pedidos internos** e **Equipe e vendedores**. Em telas grandes, o menu lateral acompanha
   a operacao; no celular, vira uma barra horizontal no topo da tela. A
   loja ativa permanece selecionada ao alternar entre as secoes.
   A troca de secao volta ao inicio da pagina, sem ocultar o novo conteudo
@@ -80,6 +80,37 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
 
 Criacao de lojas e inclusao de membros continuam pela API/Swagger. Ainda nao
 existem telas para imagens, edicao/exclusao de produtos ou checkout.
+
+## Equipe e vendedores
+
+- Somente o proprietario da loja pode listar/cadastrar vendedores, corrigir
+  nome, ativar/inativar e vincular/desvincular uma conta ja participante.
+  Gerente/colaborador veem uma explicacao, sem formularios ou consultas de
+  vendedores. O backend valida novamente todas as operacoes.
+- O cadastro comercial pode existir sem login. Vincular uma conta por e-mail
+  nao cria conta, membership ou permissao; cada conta tem no maximo um vendedor
+  vinculado por loja (inclusive inativo). Inclusao de membros continua na API.
+- Inativar preserva o cadastro comercial, **nao bloqueia login nem revoga
+  permissoes**. Nao existe exclusao fisica, comissao ou venda comercial nesta
+  entrega. Nenhum dado ou senha do Murimel foi importado.
+- Lista paginada em 20 registros, incluindo inativos. Dados/chaves por
+  usuario e loja; logout limpa o cache. Mudanca de loja descarta formularios.
+- Criacao usa requestId. Rede/timeout/5xx conserva o envio em memoria ao
+  navegar entre secoes/lojas; **Confirmar mesmo cadastro** reenvia os mesmos
+  dados sem duplicar. Reload/logout perde essa memoria: consulte a lista
+  antes de iniciar outro cadastro depois de uma falha de resposta.
+- Edicao e vinculo usam versao. Conflito ou resposta incerta exige
+  **Recarregar cadastro**, conferir e reaplicar a alteracao. Recarregar
+  descarta campos ainda nao salvos; o erro nunca e tratado como sucesso.
+  Salvar vinculo nao descarta alteracoes comerciais ainda nao salvas.
+- Nome e situacao comercial sao salvos separadamente do vinculo de conta.
+  A tela informa o ID da conta vinculada (o endpoint nao expoe e-mail/nome de
+  contas). A autoria de criacao/ultima alteracao fica no backend; nao e um
+  historico completo de edicoes.
+
+No Railway, publique primeiro o backend com a migracao V6 e depois este
+frontend. Nao sao necessarias novas variaveis. Valide o fluxo em uma loja
+de teste como OWNER e confirme negacao para MANAGER/STAFF.
 
 ## Direcao de negocio e legado Murimel
 

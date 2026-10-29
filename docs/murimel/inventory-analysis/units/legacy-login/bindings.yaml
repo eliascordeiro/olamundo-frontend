@@ -1,0 +1,5 @@
+unit: legacy-login
+bindings:
+  - { type: convention, name: "Janela Login: vendedor numerico e senha", source_loc: "Murimel/EasyControl.Prg:429", target: "VerLogin()", must_appear_in_target: false, notes: "Destino atual usa email. Codigo antigo deve continuar como referencia, nao email ficticio." }
+  - { type: convention, name: "Botoes de login e logoff", source_loc: "Murimel/EasyControl.Prg:454", target: "My_SQL_Login()", must_appear_in_target: false, notes: "Sessao do destino permanece Spring Security/MongoDB." }
+runtime_config: []

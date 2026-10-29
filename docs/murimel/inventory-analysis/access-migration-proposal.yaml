@@ -1,0 +1,94 @@
+status: "Analise estatica e proposta; sem mudanca de autenticacao, permissoes ou importacao."
+evidence_basis: static
+observations:
+  - source_loc: "Murimel/EasyControl.Prg:555"
+    fact: "Login consulta easy_vendedor por codigo e credencial; nome/loja/flags sao hidratados desse registro."
+  - source_loc: "Murimel/Easy120.prg:463"
+    fact: "Cadastro concentra vendedor comercial, usuario, loja e permissoes; campos de email e inativacao nao aparecem nessa gravacao."
+  - source_loc: "Murimel/EasyControl.Prg:263"
+    fact: "iMaster abre easy_senha; nao comprova propriedade nem conceder tudo."
+  - source_loc: "Murimel/EasyControl.Prg:148"
+    fact: "iEasy120 abre cadastro que edita usuarios/permissoes; nao exige iMaster nesse gate."
+  - source_loc: "Murimel/Easy200.prg:3086"
+    fact: "PDV lista vendedores da loja da sessao; vendedor comissionado selecionado nao e obrigatoriamente operador autenticado."
+permission_evidence:
+  rule: "Nome de campo no UPDATE + leitura do login + gate real no menu. Bit abre modulo; nao e prova de permissao separada para cada acao CRUD."
+  source_loc: "Murimel/Easy120.prg:536"
+  actual_gates:
+    - { field: i100, session: iEasy100, function: "Cadastro de clientes", source_loc: "Murimel/EasyControl.Prg:145" }
+    - { field: i110, session: iEasy110, function: "Cadastro de fornecedores", source_loc: "Murimel/EasyControl.Prg:146" }
+    - { field: i120, session: iEasy120, function: "Cadastro de vendedores e permissoes; rotulo da checkbox diz Lojas", source_loc: "Murimel/EasyControl.Prg:148" }
+    - { field: i130, session: iEasy130, function: "Cadastro de lojas; rotulo da checkbox diz Vendedores", source_loc: "Murimel/EasyControl.Prg:147" }
+    - { field: i161, session: iEasy161, function: "Grupos", source_loc: "Murimel/EasyControl.Prg:156" }
+    - { field: i162, session: iEasy162, function: "Subgrupos", source_loc: "Murimel/EasyControl.Prg:157" }
+    - { field: i163, session: iEasy163, function: "Produtos", source_loc: "Murimel/EasyControl.Prg:158" }
+    - { field: i164, session: iEasy164, function: "Transferencias", source_loc: "Murimel/EasyControl.Prg:160" }
+    - { field: i165, session: iEasy165, function: "Alterar precos", source_loc: "Murimel/EasyControl.Prg:161" }
+    - { field: i200, session: iEasy200, function: "PDV", source_loc: "Murimel/EasyControl.Prg:169" }
+    - { field: i201, session: iEasy201, function: "Caixa", source_loc: "Murimel/EasyControl.Prg:171" }
+    - { field: i300, session: iEasy300, function: "Pedidos de compra", source_loc: "Murimel/EasyControl.Prg:174" }
+    - { field: i301, session: iEasy301, function: "Entradas", source_loc: "Murimel/EasyControl.Prg:175" }
+    - { field: iMaster, session: iMaster, function: "Cadastro de usuarios masters; nao OWNER", source_loc: "Murimel/EasyControl.Prg:263" }
+  further_observed_families:
+    source_loc: "Murimel/Easy120.prg:340"
+    fields: [i150, i170, i171, i172, i700, i701, i702, i250, i251, i252, iCalc, ibkpe, i704, i400, i410, i411, i420, i430, i440, i450, i500, i501, i502, i503, i600, i601, i650, i651, i750, i800, i166, i850]
+    notes: "Demais flags observadas em formulario/persistencia. Nao implica modulo ativo ou equivalencia de direitos; i166 e entrada de estoque comentada. Confirmar gate/acao antes de implementar cada modulo."
+  ambiguity:
+    source_loc: "Murimel/Easy120.prg:534"
+    notes: "Ordem do INSERT conflita com FieldGet de login/MontaCheck a partir do bloco de i301/i503. Revisar schema e amostra de flags por coluna em copia, nao gerar concessao de formulario posicional."
+current_target:
+  account: "MongoDB users: id, name, email, passwordHash, createdAt. Email normalizado no AuthService."
+  login: "Spring Security; BCrypt com fator 12. Nao existe login por codigo legado no contrato atual."
+  membership: "PostgreSQL store_memberships(store_id,user_id,role). Uma conta pode ter linhas para varias lojas; nao FK entre Mongo e PostgreSQL."
+  roles: "OWNER administra membros; OWNER/MANAGER escrevem catalogo/estoque/pedidos; membros consultam."
+  provisioning: "StoreService.create atribui OWNER ao criador; addMember exige OWNER e conta existente, e so permite MANAGER/STAFF."
+  gap: "Sem vendedor comercial independente, permissoes granulares por funcao, fluxo dedicado de importacao/convite/redefinicao ou inativacao observado nos contratos de conta e loja lidos."
+recommendation:
+  preserve_now: "Usuarios/sessoes atuais e seus contratos, incluindo isolamento por membership e checagem no servidor."
+  candidates:
+    - "Identidade de vendedor comercial por empresa/origem, vinculavel a uma conta nominal; ex-funcionarios continuam no historico sem acesso ativo."
+    - "Permissoes por loja e funcao/acao, com perfis como conjuntos iniciais e concessoes explicitas; nunca papel global derivado de iMaster."
+    - "Proprietario confirmado administra equipe e poderes; delegacao administrativa, se desejada, exige decisao explicita e trilha de auditoria."
+    - "Separar vender, confirmar/receber no caixa, ajustar estoque, precificar, transferir, consultar comissoes e administrar usuarios."
+    - "Operador, vendedor da venda e autorizador sao referencias separadas; aprovacao excepcional nominal, com motivo, data e escopo."
+    - "Menu reflete capacidades, mas API autoriza cada acao e loja. Funcao ainda inexistente continua indisponivel."
+  no_automatic_grants:
+    - "iMaster ou presenca em easy_senha nao cria OWNER."
+    - "i120 nao concede administracao no destino automaticamente."
+    - "Ter permissao de venda nao implica ajustar estoque/preco, cancelar venda ou ler comissoes de todos."
+    - "Falta de equivalencia nao promove a MANAGER nem concede leitura geral."
+    - "Cadastro legado sem email verificado nao gera email ficticio nem credencial compartilhada."
+migration_candidates:
+  - source: "easy_vendedor: codigo, vendedor"
+    target: "Identidade comercial de origem e eventual conta nominal"
+    rule: "Origem/empresa/base+codigo e chave de correspondencia. Mesmo nome ou codigo em bases diferentes nao une identidades sem revisao."
+  - source: easy_vendedor.loja
+    target: "Loja padrao historica e membership aprovado"
+    rule: "Resolver por mapa de lojas; nao assumir acesso a todas as lojas ou mudanca de autoria historica por transferencia de funcionario."
+  - source: "easy_vendedor: flags nomeadas"
+    target: "Evidencia restrita + proposta de permissoes por loja"
+    rule: "Validar DDL e efeitos reais; proprietario revisa/assina concessoes e negativas antes de ativar."
+  - source: "Vendedor em easy_vendas/easy_itens/comissao_loja"
+    target: "Historico e politicas comerciais vinculados a identidade comercial"
+    rule: "Preservar codigos; referencias a vendedor excluido ficam explicitas, sem atribuir a pessoa homonima."
+  - source: "oUsuario e demais campos de operador dos documentos"
+    target: "Autoria original preservada e eventual correspondencia confirmada"
+    rule: "Nome textual nao e userId; se ambiguo, preservar texto e sinalizar ausencia de vinculo em vez de inventar operador."
+exclude:
+  - "Senhas de vendedor, senhas easy_senha, credenciais de banco e sessoes; nao extrair para staging comum ou logs."
+  - "Concessao de proprietario, administracao ou acesso ativo baseada apenas em flags ou nomes antigos."
+  - "Reativacao automatica de ex-funcionarios e copia cega de privilegios antigos."
+next_small_delivery:
+  recommendation: "Aprovar gestao de vendedores/equipe e permissoes por loja antes da ativacao migrada."
+  acceptance_candidates:
+    - "Proprietario confirmado cadastra/vincula vendedor e decide acesso/loja sem alterar historico de vendas."
+    - "Vendedor recebe apenas operacoes aprovadas; PDV e caixa sao capacidades distintas quando implementados."
+    - "Usuario de uma loja nao administra nem consulta outra sem concessao explicita."
+    - "Acesso negado na API mesmo manipulando menu/URL; operacoes atuais preservadas."
+    - "Revogar acesso nao apaga vendedor nem autoria; convite/ativacao/redefinicao deve existir antes de importar contas ativas."
+    - "Importacao ensaiada e repetivel, sem duplicar conta/vendedor/membership nem ressuscitar permissao revogada."
+  pending_decisions:
+    - "Confirmar proprietario(s) real(is), administradores delegados e escopo empresa/rede."
+    - "Decidir capacidades por perfil e quem pode conceder/revogar cada uma."
+    - "Confirmar pessoas ativas e canal de ativacao; cadastro legado nao fornece email nesse fluxo."
+    - "Obter DDL e diagnosticar divergencias de ordem/rotulo antes da carga de flags."

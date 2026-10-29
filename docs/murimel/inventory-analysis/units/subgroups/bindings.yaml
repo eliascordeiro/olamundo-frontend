@@ -1,0 +1,4 @@
+unit: subgroups
+bindings:
+  - { type: convention, name: "Menu Sub-Grupos, permissao iEasy162", source_loc: "Murimel/EasyControl.Prg:157", target: "Easy162()", must_appear_in_target: false, notes: "UI nova pode ter wiring distinto; chave composta deve ser preservada no mapeamento." }
+runtime_config: []

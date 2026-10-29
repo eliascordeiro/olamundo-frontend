@@ -1,0 +1,4 @@
+unit: groups
+bindings:
+  - { type: convention, name: "Menu Grupo, permissao iEasy161", source_loc: "Murimel/EasyControl.Prg:156", target: "Easy161()", must_appear_in_target: false, notes: "Preservar funcao comercial; nao callback ou senha legada." }
+runtime_config: []

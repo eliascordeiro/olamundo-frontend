@@ -1,0 +1,7 @@
+unit: products
+commit: false
+candidate_splits:
+  - id: "Murimel/Easy163.prg:492"
+    drivers: [concern_split, data_ownership_split]
+    rationale: "Cadastro compartilhado, precificacao e ajuste de saldo por local estao no mesmo callback; saldo exige auditoria e identidade por local distintas."
+    source_slice: { file: Murimel/Easy163.prg, lines: [492, 576] }

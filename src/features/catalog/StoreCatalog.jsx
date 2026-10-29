@@ -6,6 +6,7 @@ import OrdersPanel from '../orders/OrdersPanel'
 import { useCreateOrder, useOrderDraft } from '../orders/queries'
 import Icon from '../../components/Icon'
 import { RetailOverview, SalesPreparation } from '../retail/RetailPages'
+import TeamPanel from '../team/TeamPanel'
 import './catalog.css'
 
 const roleNames = { OWNER: 'Proprietário', MANAGER: 'Gerente', STAFF: 'Colaborador' }
@@ -137,6 +138,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
 
   if (section === 'overview') return <RetailOverview store={store} draftCount={canCreate ? draft.items.length : 0} onSectionChange={onSectionChange} />
   if (section === 'sales') return <SalesPreparation onSectionChange={onSectionChange} />
+  if (section === 'team') return <TeamPanel userId={userId} store={store} />
 
   if (section === 'catalog') return <section className="product-catalog" aria-label={`Catálogo de ${store.name}`}>
     <div className="catalog-heading">

@@ -1,0 +1,57 @@
+import { test, expect } from '@playwright/test'
+import { createAccount, signIn, testEmail, password } from './helpers'
+
+test('equipe persiste no backend real e não muda o acesso do vendedor', async ({ page }) => {
+  const ownerEmail = testEmail()
+  await createAccount(page, ownerEmail)
+  await signIn(page, ownerEmail)
+  const post = async (path, data) => {
+    const csrf = await page.request.get('/api/auth/csrf')
+    expect(csrf.status()).toBe(200)
+    return page.request.post(path, {
+      headers: { 'X-CSRF-TOKEN': (await csrf.json()).token }, data,
+    })
+  }
+  const memberEmail = testEmail()
+  const registration = await post('/api/auth/register', { name: 'Marina Vendedora', email: memberEmail, password })
+  expect(registration.status()).toBe(201)
+  const storeResponse = await post('/api/stores', { name: 'Equipe E2E isolada' })
+  expect(storeResponse.status()).toBe(201)
+  const store = await storeResponse.json()
+  expect((await post(`/api/stores/${store.id}/members`, { email: memberEmail, role: 'STAFF' })).status()).toBe(201)
+  await page.reload()
+  await page.getByLabel('Loja ativa').selectOption(store.id)
+  await page.getByRole('button', { name: 'Equipe e vendedores', exact: true }).click()
+  await page.getByLabel('Nome do novo vendedor', { exact: true }).fill('Vendedor do backend real')
+  await page.getByRole('button', { name: 'Cadastrar vendedor', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Vendedor do backend real', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Gerenciar Vendedor do backend real', exact: true }).click()
+  await page.getByLabel('E-mail da conta já participante', { exact: true }).fill(memberEmail)
+  await page.getByRole('button', { name: 'Vincular conta', exact: true }).click()
+  await expect(page.getByText('Conta vinculada:', { exact: false })).toBeVisible()
+  await page.getByLabel('Vendedor ativo', { exact: true }).uncheck()
+  await page.getByLabel('Nome do vendedor', { exact: true }).fill('Vendedor inativo preservado')
+  await page.getByRole('button', { name: 'Salvar cadastro comercial', exact: true }).click()
+  await expect(page.getByText('Inativo', { exact: true })).toBeVisible()
+  const listing = await page.request.get(`/api/stores/${store.id}/salespeople`)
+  expect(listing.status()).toBe(200)
+  const seller = (await listing.json()).content[0]
+  expect(seller).toMatchObject({ name: 'Vendedor inativo preservado', active: false, version: 2 })
+  expect(seller.userId).toBeTruthy()
+  await page.reload()
+  await page.getByLabel('Loja ativa').selectOption(store.id)
+  await page.getByRole('button', { name: 'Equipe e vendedores', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Vendedor inativo preservado', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Sair', exact: true }).click()
+  expect((await page.request.get(`/api/stores/${store.id}/salespeople`)).status()).toBe(401)
+  await signIn(page, memberEmail)
+  await page.getByLabel('Loja ativa').selectOption(store.id)
+  await page.getByRole('button', { name: 'Equipe e vendedores', exact: true }).click()
+  await expect(page.getByText('Somente o proprietário pode gerenciar a equipe desta loja.')).toBeVisible()
+  expect((await page.request.get(`/api/stores/${store.id}/salespeople`)).status()).toBe(403)
+  expect((await post(`/api/stores/${store.id}/salespeople/${seller.id}`,
+    { name: 'Tentativa indevida', active: true, version: 2 })).status()).toBe(403)
+  const membership = await page.request.get(`/api/stores/${store.id}`)
+  expect((await membership.json()).role).toBe('STAFF')
+  await page.getByRole('button', { name: 'Sair', exact: true }).click()
+})

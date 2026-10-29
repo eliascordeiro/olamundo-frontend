@@ -1,0 +1,5 @@
+unit: customers
+bindings:
+  - { type: convention, name: "Cadastros / Clientes", source_loc: "Murimel/EasyControl.Prg:146", target: "Easy100(.f.)", must_appear_in_target: false, notes: "Permissao iEasy100; cliente comercial nao equivale a login do sistema." }
+runtime_config:
+  - { key: iServidor, source_loc: "Murimel/Easy100.prg:868", source: code, default_value: "Nao confirmado", must_appear_in_target: false, notes: "Seleciona escrita secundaria; valores/conexoes nao publicados." }

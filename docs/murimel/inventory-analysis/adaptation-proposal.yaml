@@ -1,0 +1,79 @@
+status: "Proposta para discussao; nenhuma mudanca funcional ou importacao aprovada por este documento."
+evidence_basis: static
+architecture:
+  keep: "Backend modular Spring Boot, PostgreSQL, Flyway e React; nao requer microservicos."
+  candidate:
+    - "Empresa/rede como fronteira de compartilhamento; lojas e locais/depositos dentro dessa fronteira, com autorizacao explicita."
+    - "Produto mestre da empresa/rede com identidade de origem; oferta/preco e saldo por loja/local. Alternativa menos invasiva: produtos por loja com correspondencia compartilhada explicita."
+    - "Grupos/subgrupos como classificacao e politicas comerciais, sem usar digitos do SKU como unica relacao."
+    - "Cliente comercial e fornecedor separados de login; vendedor comercial separado de papel de autorizacao."
+    - "Historico comercial importado identificavel, sem efeitos de estoque retroativos; operacoes abertas com tratamento proprio."
+  decision_needed:
+    - "Quais locais representam loja, deposito, empresa distinta ou apenas alias? Explicar regra 05 -> 2."
+    - "Quais lojas compartilham produto, cliente, custo, politica comercial e comissao? Isolar empresas/clientes independentes."
+    - "Produto realmente tem unidade fracionada ou saldo negativo? Medir antes de decidir tipos/politicas."
+    - "Como tratar custo medio global legado versus custo por empresa/local? Nao recalcular durante importacao."
+    - "Qual regra oficial de comissao, entrega, montagem, autorizacao de desconto e competencia? Consultar analise anterior."
+mapping_candidates:
+  - { source: easy_grupo, target: "Cadastro de grupos ainda inexistente", preserve: "codigo, nome e politicas; excecoes de comissao separadas" }
+  - { source: easy_subgrupo, target: "Subgrupos vinculados ao grupo, ainda inexistentes", preserve: "chave composta, nome, margem/MK e descontos sem reajuste automatico" }
+  - { source: easy_produtos, target: "Evolucao de catalog_products e identidade compartilhada aprovada", preserve: "codigo bruto, descricao completa, custo/preco, montagem, CFOP/NCM de origem e demais metadados; nao tratar dado fiscal como validado" }
+  - { source: easy_loja, target: "Lojas/locais e possivel empresa/rede", preserve: "codigo, tipo de local, vinculo empresarial; mapa aprovado em vez de copiar numeros magicos" }
+  - { source: easy_lojasaldo, target: "Abertura reconciliada de inventory_balances com movimento/lote rastreavel", preserve: "saldo por produto/local, sem replay de historico e sem soma automatica com saldo existente" }
+  - { source: easy_transferencia, target: "Historico de transferencias; modulo operacional posterior", preserve: "locais documentais e fisicos resolvidos, baixa ou documento sem baixa, valores e referencias" }
+  - { source: easy_fornecedor, target: "Cadastro de fornecedores ainda inexistente", preserve: "identidade e vinculos aos documentos; ampliar inventario de campos apos DDL" }
+  - { source: easy_pedidos, target: "Compras/recebimentos, nao sales_orders", preserve: "fornecedor, pedido/nota, linhas, local, custos e previsoes; separar abertos/recebidos" }
+  - { source: easy_cliente, target: "Clientes comerciais ainda inexistentes", preserve: "codigo, contatos/endereco e documentos textuais; credito/referencias somente se necessario e aprovado" }
+  - { source: "easy_vendas/easy_itens/pagamentos/endereco/obs/outros", target: "Historico de vendas e futura operacao comercial", preserve: "cliente+venda+sequencia, loja, vendedor, valores, situacao/cancelamento, pagamentos e logistica; extensao analisada no conjunto anterior de vendas" }
+  - { source: "assistencia/assistencia_produtos", target: "Historico/pendencias de pos-venda, se houver", preserve: "relacao com cliente/produto; analisar ciclo completo antes de habilitar operacao" }
+process_candidate:
+  - phase: "Confirmar origem"
+    actions:
+      - "Responsavel confirma quais bases sao oficiais, se existem copias por loja e escrita secundaria de clientes."
+      - "Obter DDL sem dados e sem segredos, versao/engine/charset/collation e configuracao de datas."
+      - "Nao pedir credenciais em chat; obter acesso restrito por mecanismo seguro ou copia local autorizada."
+  - phase: "Fotografia e staging restrito"
+    actions:
+      - "Backup/copia consistente com manifest, checksums, horario e timezone; adequar estrategia a engine e a todas as tabelas/bases relacionadas."
+      - "Extrair com colunas explicitas, sem inserir na base oficial do destino. Dados pessoais ficam fora de Git, screenshots e logs."
+      - "Manter origem, chave bruta, hash, lote e resultado de validacao; preservar texto/decimal sem conversao silenciosa."
+  - phase: "Diagnostico medido"
+    checks:
+      - "Contagem por entidade/base/local; duplicidades de produto, grupo/subgrupo, saldo e identificadores de documentos."
+      - "Orfaos entre produtos, grupos, subgrupos, locais, clientes, vendedores, fornecedores e documentos."
+      - "Comprimento de descricao; charset; codigo/CPF/CNPJ/CEP/telefone como texto; campos em branco e colisoes de SKU normalizado."
+      - "Saldo negativo/fracionado/overflow; preco/custo fora de faixa ou precisao; datas zero/invalidas."
+      - "Vendas canceladas/pendentes, compras abertas, recebimentos parciais, entregas/montagens e assistencias em aberto."
+      - "Divergencias entre copia primaria/secundaria; duplicidade de cliente nao pode ser decidida so por nome."
+  - phase: "Ensaio idempotente"
+    actions:
+      - "Homologacao com subconjunto referencialmente completo; depois ensaio integral em copia, nao producao."
+      - "Correspondencia unica por sistema/empresa+tabela+chave legada; incluir loja/local quando fizer parte da identidade. Confirmar chave real pelo DDL."
+      - "Lote serve para auditoria, nao para criar nova identidade a cada tentativa. Mesmo hash e no-op; conteudo divergente gera revisao visivel."
+      - "Classificacoes/locais e cadastros antes dos documentos; historico sem efeitos; abertura fisica separada."
+      - "Nao atribuir todo cliente a uma unica loja pela primeira venda; preservar vinculos reais aprovados."
+  - phase: "Conciliacao e aceite"
+    checks:
+      - "Quantidade de origem = aceitos + rejeitados/pendentes documentados; nenhum descarte invisivel."
+      - "Saldo por produto/local e totais por loja/grupo; validar tambem custo/preco e valorizacao, nao apenas soma global."
+      - "Vendas por cliente+numero+linha, data/loja/status; totais, descontos, frete, pagamentos e cancelamentos preservados, sem recalcular historico."
+      - "Pendencias operacionais possuem destino e responsavel; nenhuma vira confirmacao atual automatica."
+      - "Repetir carga nao muda contagem, documentos ou saldo. Testar colisao e falha intermediaria antes de liberar."
+      - "Todas as diferencas resolvidas ou explicitamente aprovadas; nao inventar tolerancia monetaria."
+  - phase: "Corte controlado"
+    actions:
+      - "Combinar janela de congelamento de escrita e fotografia final; nao usar MAX(id) como captura de alteracoes/exclusoes."
+      - "Delta so com mecanismo comprovado de mudancas e consistencia, nao presumir CDC/timestamps existentes."
+      - "Confirmar estoque preexistente no destino: distinguir testes de dados reais; nunca apagar ou somar sem conciliacao e aprovacao."
+      - "Manter origem preservada para consulta e trilha de correspondencia acessivel sob permissao."
+      - "Reversao por lote e dependencias somente antes de novas operacoes; apos novas vendas exige conciliacao/compensacao, nao restauracao cega de backup."
+small_delivery_candidates:
+  notes: "Sequencia ilustrativa para aprovar posteriormente; nao e autorizacao nem plano de implementacao fechado."
+  slices:
+    - "Confirmar esquema e mapa de locais, sem carga."
+    - "Grupos/subgrupos e identidade de origem, com APIs e UI pequenas, preservando endpoints existentes."
+    - "Produto completo e consulta por classificacao/codigo antigo, sem saldo real."
+    - "Ensaio de clientes/fornecedores e produto/local; saldo de abertura somente em homologacao."
+    - "Transferencias/recebimentos operacionais e tratamento de pendencias, em entregas separadas."
+    - "Venda comercial com cliente/vendedor/comissao/logistica e arquivo historico; corte so quando operacao necessaria estiver pronta."
+next_safe_step: "Obter DDL e confirmar mapa loja/deposito/base oficial; medir qualidade na copia antes de codificar o importador."

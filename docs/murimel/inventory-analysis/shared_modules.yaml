@@ -1,0 +1,26 @@
+modules:
+  - name: mysql-primary
+    kind: store
+    source_loc: "Murimel/EasyControl.Prg:358"
+    used_by_units: [groups, subgroups, products, transfers, price-adjustment, purchase-orders, receiving, customers, legacy-login, salespeople-access, master-credentials]
+    fields:
+      - name: Query
+        type: "TMySQLServer.Query(character SQL) -> objeto de resultado; tipo do driver nao verificado."
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Conexao compartilhada oServer; recomendacao futura de adaptador de extracao, nao copiar conexoes/credenciais para o frontend. Nenhuma ponte criada."
+  - name: legacy-access-context
+    kind: god-class
+    source_loc: "Murimel/EasyControl.Prg:546"
+    used_by_units: [legacy-login, salespeople-access, master-credentials]
+    fields:
+      - { name: EasyCodVen, type: "character; codigo do vendedor autenticado convertido por alltrim(str(...))." }
+      - { name: CodLoja, type: "valor de FieldGet(2), usado como codigo numerico de loja; DDL nao verificado." }
+      - { name: oUsuario, type: "nome do vendedor, retornado por FieldGet(3); nao e ID imutavel." }
+      - { name: iMaster, type: "flag de FieldGet(23), gate por igualdade a 1." }
+      - { name: iEasy120, type: "flag de FieldGet(7), acesso a cadastro de vendedores/permissoes." }
+    god_class: true
+    split_candidate: true
+    migration_strategy: split
+    notes: "EasyControl contem menu, login, conexao e autorizacao; whitelist e o recorte de estado observado, nao uma enumeracao completa de todos os globais. Nao portar globais do processo para sessoes web."

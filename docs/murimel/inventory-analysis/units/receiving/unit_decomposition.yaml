@@ -1,0 +1,7 @@
+unit: receiving
+commit: false
+candidate_splits:
+  - id: "Murimel/Easy301.Prg:655"
+    drivers: [concern_split, lifecycle_split]
+    rationale: "Entrada junta documento de fornecedor, quantidade recebida, custo medio e preco de venda; reaproveitar dados sem disparar recalculo de historico."
+    source_slice: { file: Murimel/Easy301.Prg, lines: [655, 771] }

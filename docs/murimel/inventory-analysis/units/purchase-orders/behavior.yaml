@@ -1,0 +1,15 @@
+unit: purchase-orders
+side_effects:
+  - source_loc: "Murimel/Easy300.Prg:538"
+    effect: "Substitui linhas de easy_pedidos por fornecedor/pedido; guarda previsao, itens, custo/total e customedio."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy300.Prg:584"
+    condition: "Calculo de custo para item comprado."
+    behavior: "Le saldos globais e custo atual; acumulo observado inicializa saldo e soma novamente a primeira linha. Exige conciliacao, nao reproduzir cegamente."
+    must_preserve: false
+error_paths: []
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy300.Prg:538", scope: "Delete/reinsert das linhas; transacao abrangente nao observada.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Pedido de fornecedor nao e pedido interno de venda do destino."

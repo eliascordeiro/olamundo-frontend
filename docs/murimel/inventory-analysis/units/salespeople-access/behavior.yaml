@@ -1,0 +1,35 @@
+unit: salespeople-access
+side_effects:
+  - source_loc: "Murimel/Easy120.prg:463"
+    effect: "Grava codigo, loja, nome do vendedor, credencial e flags individuais no mesmo registro easy_vendedor."
+    must_preserve: false
+  - source_loc: "Murimel/Easy120.prg:472"
+    effect: "Transforma escolhas de permissoes em flags 1/0, incluindo PDV, caixa, estoque, compras, relatorios e administracao."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/EasyControl.Prg:148"
+    condition: "iEasy120=1."
+    behavior: "Abre cadastro de vendedores e sua tela de permissoes; essa entrada nao testa iMaster."
+    must_preserve: false
+  - source_loc: "Murimel/Easy120.prg:357"
+    condition: "Checkboxes i120 e i130."
+    behavior: "Rotulos Lojas/Vendedores estao trocados em relacao aos gates reais de menu; migrar pela semantica confirmada."
+    must_preserve: false
+  - source_loc: "Murimel/Easy120.prg:534"
+    condition: "Criacao por INSERT posicional versus edicao por nomes."
+    behavior: "INSERT coloca ii503 antes de ii301, mas login/MontaCheck esperam i301 no indice 39 e i503 no 48. Validar DDL e valores, nao assumir correspondencia."
+    must_preserve: false
+  - source_loc: "Murimel/Easy120.prg:236"
+    condition: "Exclusao de vendedor."
+    behavior: "DELETE por codigo, sem verificacao de referencias historicas nesse callback."
+    must_preserve: false
+error_paths:
+  - source_loc: "Murimel/Easy120.prg:541"
+    trigger: "Falha SQL ao gravar."
+    outcome: "Mensagem e retorno."
+    contract: "Migracao deve rejeitar explicitamente loja/identidade/permissao ambiguas; nunca promover a MANAGER como alternativa."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy120.prg:463", scope: "Escrita SQL de registro; nao ha transacao de conta mais vinculo em bancos distintos.", isolation: "Nao verificada.", must_preserve: false }
+notes: "Preservar dados comerciais/flags como evidencia. Credenciais nao fazem parte da carga; novos acessos e poderes administrativos exigem revisao do proprietario."

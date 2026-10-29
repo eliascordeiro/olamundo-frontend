@@ -1,0 +1,92 @@
+scope: "Oito telas primarias de estoque/compras/clientes e tres superficies de acesso; consultas auxiliares sao evidencias, nao inventario completo do ERP."
+evidence: static
+units:
+  - name: groups
+    trigger: page
+    trigger_detail: "Cadastros / Estoque / Grupo -> Easy161()"
+    source_anchors: [{ path: Murimel/Easy161.prg, line: 8 }]
+    exported_signature: [{ method: "Easy161()", source_loc: "Murimel/Easy161.prg:8", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: subgroups
+    trigger: page
+    trigger_detail: "Cadastros / Estoque / Sub-Grupos -> Easy162()"
+    source_anchors: [{ path: Murimel/Easy162.prg, line: 7 }]
+    exported_signature: [{ method: "Easy162()", source_loc: "Murimel/Easy162.prg:7", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: products
+    trigger: page
+    trigger_detail: "Cadastros / Estoque / Produtos -> Easy163()"
+    source_anchors: [{ path: Murimel/Easy163.prg, line: 9 }]
+    exported_signature: [{ method: "Easy163()", source_loc: "Murimel/Easy163.prg:9", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: transfers
+    trigger: page
+    trigger_detail: "Cadastros / Estoque / Transferencias -> Easy164()"
+    source_anchors: [{ path: Murimel/Easy164.prg, line: 4 }]
+    exported_signature: [{ method: "Easy164()", source_loc: "Murimel/Easy164.prg:4", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: price-adjustment
+    trigger: page
+    trigger_detail: "Cadastros / Estoque / Altera Precos -> Easy165()"
+    source_anchors: [{ path: Murimel/Easy165.Prg, line: 7 }]
+    exported_signature: [{ method: "Easy165()", source_loc: "Murimel/Easy165.Prg:7", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: purchase-orders
+    trigger: page
+    trigger_detail: "Entradas/Pedidos / Pedidos -> Easy300()"
+    source_anchors: [{ path: Murimel/Easy300.Prg, line: 8 }]
+    exported_signature: [{ method: "Easy300()", source_loc: "Murimel/Easy300.Prg:8", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: receiving
+    trigger: page
+    trigger_detail: "Entradas/Pedidos / Entradas -> Easy301()"
+    source_anchors: [{ path: Murimel/Easy301.Prg, line: 7 }]
+    exported_signature: [{ method: "Easy301()", source_loc: "Murimel/Easy301.Prg:7", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: customers
+    trigger: page
+    trigger_detail: "Cadastros / Clientes -> Easy100(.f.)"
+    source_anchors: [{ path: Murimel/Easy100.prg, line: 21 }]
+    exported_signature: [{ method: "procedure Easy100(_ver)", source_loc: "Murimel/Easy100.prg:21", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }]
+  - name: legacy-login
+    trigger: page
+    trigger_detail: "Janela Login -> VerLogin(); codigo do vendedor e senha."
+    source_anchors: []
+    exported_signature: []
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }, { module: legacy-access-context, used_fields: [EasyCodVen, CodLoja, oUsuario, iMaster, iEasy120] }]
+    notes: "Fonte em EasyControl.Prg:383,546; compartilhada com menu, conexao e autorizacao, registrada em shared_modules."
+  - name: salespeople-access
+    trigger: page
+    trigger_detail: "Cadastros / Vendedores -> Easy120(); loja e permissoes do usuario-vendedor."
+    source_anchors: [{ path: Murimel/Easy120.prg, line: 6 }]
+    exported_signature: [{ method: "Easy120()", source_loc: "Murimel/Easy120.prg:6", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }, { module: legacy-access-context, used_fields: [iEasy120] }]
+  - name: master-credentials
+    trigger: page
+    trigger_detail: "Apoio / Usuarios Masters -> EasySenha(), condicionado a iMaster."
+    source_anchors: [{ path: Murimel/EasySenha.Prg, line: 6 }]
+    exported_signature: [{ method: "EasySenha()", source_loc: "Murimel/EasySenha.Prg:6", stability: may_change }]
+    dynamic_entrypoints: []
+    depends_on: []
+    shared_refs: [{ module: mysql-primary, used_fields: [Query] }, { module: legacy-access-context, used_fields: [iMaster] }]

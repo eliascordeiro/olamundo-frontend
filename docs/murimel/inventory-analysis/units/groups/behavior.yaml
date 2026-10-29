@@ -1,0 +1,22 @@
+unit: groups
+side_effects:
+  - source_loc: "Murimel/Easy161.prg:318"
+    effect: "Grava nome, comissoes, descontos, MK e NCM do grupo."
+    must_preserve: true
+  - source_loc: "Murimel/Easy161.prg:361"
+    effect: "Substitui excecoes por grupo; guarda somente percentual maior que zero."
+    must_preserve: true
+branches:
+  - source_loc: "Murimel/Easy161.prg:486"
+    condition: "Grade de comissao especifica."
+    behavior: "Relaciona comissao_loja.loja ao codigo do vendedor."
+    must_preserve: true
+error_paths:
+  - source_loc: "Murimel/Easy161.prg:351"
+    trigger: "Falha SQL."
+    outcome: "Mensagem de erro; atomicidade entre queries nao comprovada."
+    contract: "UI desktop; nao ha contrato HTTP."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary: { source_loc: "Murimel/Easy161.prg:318", scope: "Queries sequenciais, sem transacao abrangente observada.", isolation: "Nao verificada.", must_preserve: false }
