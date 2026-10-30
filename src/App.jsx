@@ -119,7 +119,7 @@ function WorkspaceMenu({ section, onSectionChange }) {
     <span className="workspace-menu-label">DIA A DIA DA LOJA</span>
     {workspaceSections.map((item) =>
       <button key={item.id} type="button" className="workspace-nav-button"
-        aria-label={item.id === 'orders' ? 'Pedidos da loja' : item.label}
+        aria-label={item.id === 'orders' ? 'Pedidos da loja' : item.label} title={item.label}
         aria-current={section === item.id ? 'page' : undefined}
         onClick={() => onSectionChange(item.id)}>
         <Icon name={item.icon} size={19} />
@@ -133,11 +133,37 @@ function WorkspaceMenu({ section, onSectionChange }) {
   </nav>
 }
 
+const sidebarKey = 'nexo.sidebar-collapsed'
+
+// Preferência de interface (não é dado de negócio); falhas de armazenamento são ignoradas.
+function readSidebarPreference() {
+  try {
+    return window.localStorage.getItem(sidebarKey) === '1'
+  } catch {
+    return false
+  }
+}
+
+function saveSidebarPreference(collapsed) {
+  try {
+    window.localStorage.setItem(sidebarKey, collapsed ? '1' : '0')
+  } catch {
+    // Sem armazenamento disponível, a preferência vale só nesta sessão.
+  }
+}
+
 function Workspace({ user }) {
   const logoutMutation = useLogout()
   const [error, setError] = useState('')
   const [section, setSection] = useState('catalog')
   const busy = logoutMutation.isPending
+  const [collapsed, setCollapsed] = useState(readSidebarPreference)
+
+  function toggleSidebar() {
+    const next = !collapsed
+    setCollapsed(next)
+    saveSidebarPreference(next)
+  }
 
   function changeSection(nextSection) {
     setSection(nextSection)
@@ -153,9 +179,12 @@ function Workspace({ user }) {
     }
   }
 
-  return <div className="workspace">
+  return <div className={`workspace${collapsed ? ' workspace-collapsed' : ''}`}>
     <a className="skip-link" href="#workspace-content">Ir para o conteúdo</a>
     <aside className="workspace-sidebar">
+      <button type="button" className="sidebar-toggle" aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'} title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        onClick={toggleSidebar}><Icon name="menu" size={18} /></button>
       <Brand light />
       <WorkspaceMenu section={section} onSectionChange={changeSection} />
       <div className="sidebar-edition"><Icon name="sofa" size={28} /><p>Varejo, de perto.<span>Móveis · Eletro · Vendas em geral</span></p></div>

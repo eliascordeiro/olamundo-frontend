@@ -1,6 +1,23 @@
 .workspace { display: grid; grid-template-columns: 238px minmax(0, 1fr); min-height: 100svh; background: #f5f6f3; }
-.workspace-sidebar { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; padding: 32px 18px 22px; background: #123d33; color: #fff; }
-.workspace-sidebar > .brand { margin: 0 12px 48px; font-size: 30px; }
+.workspace-sidebar { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; padding: 32px 18px 22px; background: #123d33; color: #fff; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3c7565 transparent; }
+.workspace-sidebar > .brand { margin: 0 12px 32px; font-size: 30px; flex-shrink: 0; }
+.workspace-sidebar > * { flex-shrink: 0; }
+.sidebar-toggle { position: absolute; top: 12px; right: 10px; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; color: #c4d5ca; background: #ffffff0a; border: 1px solid #ffffff16; border-radius: 8px; cursor: pointer; }
+.sidebar-toggle:hover { color: #fff; background: #ffffff18; }
+.workspace.workspace-collapsed { grid-template-columns: 72px minmax(0, 1fr); }
+.workspace-collapsed .workspace-sidebar { padding: 56px 10px 18px; }
+.workspace-collapsed .sidebar-toggle { right: auto; left: 50%; transform: translateX(-50%); }
+.workspace-collapsed .workspace-sidebar > .brand { margin: 0 0 24px; justify-content: center; }
+.workspace-collapsed .brand-mark ~ span, .workspace-collapsed .workspace-menu-label, .workspace-collapsed .workspace-menu-note,
+.workspace-collapsed .sidebar-edition, .workspace-collapsed .workspace-nav-button > span, .workspace-collapsed .nav-preparing { display: none; }
+.workspace-collapsed .workspace-nav-button { justify-content: center; padding: 12px 0; }
+@media (max-height: 760px) { .sidebar-edition, .workspace-menu-note { display: none; } }
+@media (max-width: 760px) {
+  .sidebar-toggle { display: none; }
+  .workspace.workspace-collapsed { display: block; }
+  .workspace-collapsed .workspace-sidebar { padding: 0 12px; }
+  .workspace-collapsed .workspace-nav-button > span { display: inline; }
+}
 .workspace-sidebar .brand small { font-size: 7px; }
 .workspace-content, .workspace-main { min-width: 0; }
 .workspace-header { min-height: 82px; padding: 17px clamp(20px, 3vw, 48px); border-bottom: 1px solid #e3e7df; background: #ffffffc9; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
