@@ -1,7 +1,7 @@
 :root {
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  color: #192c2b;
-  background: #f8faf9;
+  color: var(--t-192c2b);
+  background: var(--g-f8faf9);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,9 +15,9 @@ button, input, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .65; }
 button, input, textarea { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid #62b9a5; outline-offset: 4px; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--b-62b9a5); outline-offset: 4px; }
 button { transition: background .18s, box-shadow .18s; }
 svg { flex-shrink: 0; }
 h1, h2, p { margin: 0; }
 button { border: 0; }
-::selection { background: #b9e3ce; color: #123d35; }
+::selection { background: var(--g-b9e3ce); color: var(--t-123d35); }

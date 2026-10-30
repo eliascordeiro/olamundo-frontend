@@ -1,14 +1,14 @@
-.stock-panel { margin: 24px 0; padding: 20px; border: 1px solid #dfe7df; border-radius: 12px; }
+.stock-panel { margin: 24px 0; padding: 20px; border: 1px solid var(--b-dfe7df); border-radius: 12px; }
 .stock-panel h4 { margin: 18px 0 12px; }
 .stock-balance { margin: 16px 0; }
 .stock-form fieldset { display: grid; gap: 12px; border: 0; padding: 0; min-width: 0; }
 .stock-form label { display: block; font-size: 12px; font-weight: 600; }
-.stock-form input, .stock-form select, .stock-form textarea { display: block; margin-top: 6px; width: 100%; min-width: 0; padding: 10px; border: 1px solid #dce3dd; border-radius: 8px; font: inherit; background: #fff; color: #203d31; }
+.stock-form input, .stock-form select, .stock-form textarea { display: block; margin-top: 6px; width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--b-dce3dd); border-radius: 8px; font: inherit; background: var(--g-ffffff); color: var(--t-203d31); }
 .stock-form textarea { resize: vertical; }
 .stock-form .primary-button, .stock-form .alert { margin-top: 14px; }
 .stock-history { list-style: none; padding: 0; }
-.stock-history li { display: grid; gap: 6px; padding: 14px 0; border-bottom: 1px solid #dfe7df; overflow-wrap: anywhere; }
-.stock-history span, .stock-history small { color: #64766a; font-size: 12px; }
+.stock-history li { display: grid; gap: 6px; padding: 14px 0; border-bottom: 1px solid var(--b-dfe7df); overflow-wrap: anywhere; }
+.stock-history span, .stock-history small { color: var(--t-64766a); font-size: 12px; }
 .stock-history p { white-space: pre-wrap; }
 .product-actions { display: grid; gap: 12px; justify-items: end; flex-shrink: 0; }
 @media (max-width: 650px) {
