@@ -8,6 +8,8 @@ import Icon from '../../components/Icon'
 import { RetailOverview, SalesPreparation } from '../retail/RetailPages'
 import TeamPanel from '../team/TeamPanel'
 import CustomersPanel from '../customers/CustomersPanel'
+import SuppliersPanel from '../suppliers/SuppliersPanel'
+import GroupsPanel from '../groups/GroupsPanel'
 import './catalog.css'
 
 const roleNames = { OWNER: 'Proprietário', MANAGER: 'Gerente', STAFF: 'Colaborador' }
@@ -130,7 +132,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
       <ul className="product-list" aria-label={label}>{visibleProducts.map((product) =>
       <li key={product.id}>
         <span className="product-tile-icon" aria-hidden="true"><Icon name="products" size={24} /></span>
-        <div className="product-info"><h3>{product.name}</h3><span className="catalog-hint">SKU: {product.sku}</span>
+        <div className="product-info"><h3>{product.name}</h3><span className="catalog-hint">SKU: {product.sku}{product.groupName ? ` · ${product.groupName}${product.subgroupName ? ` / ${product.subgroupName}` : ''}` : ''}</span>
           {product.description && <p>{product.description}</p>}</div>
         {action(product)}
       </li>)}</ul>
@@ -141,6 +143,8 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
   if (section === 'sales') return <SalesPreparation onSectionChange={onSectionChange} />
   if (section === 'team') return <TeamPanel userId={userId} store={store} />
   if (section === 'customers') return <CustomersPanel userId={userId} store={store} />
+  if (section === 'suppliers') return <SuppliersPanel userId={userId} store={store} />
+  if (section === 'groups') return <GroupsPanel userId={userId} store={store} />
 
   if (section === 'catalog') return <section className="product-catalog" aria-label={`Catálogo de ${store.name}`}>
     <div className="catalog-heading">

@@ -1,0 +1,10 @@
+.group-list, .subgroup-list { list-style: none; padding: 0; margin: 12px 0; }
+.group-list > li { padding: 16px 0; border-bottom: 1px solid #e1e9e2; }
+.group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.subgroup-list { margin: 8px 0 0 20px; padding-left: 14px; border-left: 2px solid #e1e9e2; }
+.subgroup-list > li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0; }
+.subgroup-list h4 { font-size: 14px; }
+@media (max-width: 650px) {
+  .group-head .team-actions, .group-head .team-actions button { width: 100%; }
+  .subgroup-list { margin-left: 6px; }
+}

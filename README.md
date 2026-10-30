@@ -143,6 +143,15 @@ recusados pelo backend e exibidos. Cadastro com resposta perdida conserva o envi
 (**Confirmar mesmo cadastro**) e a edicao usa versao (conflito exige **Recarregar cadastro**).
 Dados de credito do legado nao existem no sistema. Publique o backend (migracao V10) antes deste frontend.
 
+## Fornecedores e grupos de produtos
+
+As secoes **Fornecedores** e **Grupos de produtos** mostram cadastros da **empresa**, compartilhados por todas as
+lojas dela. Todos os membros consultam; so proprietario e gerente cadastram e editam (colaborador ve os dados sem
+formularios). Fornecedores tem busca no servidor (nome, CNPJ/CPF, telefone), paginacao, edicao por versao e
+ativar/inativar. Grupos mostram seus subgrupos; comissoes, markup e descontos sao guardados para as vendas e **ainda
+nao tem efeito**. O catalogo passa a mostrar grupo/subgrupo de cada produto (somente leitura). Publique o backend
+(migracao V11) antes deste frontend.
+
 ## Direcao de negocio e legado Murimel
 
 A area **Vendas** explica o fluxo comercial levantado nos fontes do Murimel:

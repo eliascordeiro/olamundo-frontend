@@ -108,6 +108,25 @@ export const createCustomer = (storeId, customer) => post(customersPath(storeId)
 export const updateCustomer = (storeId, id, customer) =>
   post(`${customersPath(storeId)}/${encodeURIComponent(id)}`, customer)
 
+const suppliersPath = (storeId) => `/api/stores/${encodeURIComponent(storeId)}/suppliers`
+export const getSuppliers = (storeId, { page = 0, size = 20, q = '', signal } = {}) =>
+  request(`${suppliersPath(storeId)}?page=${page}&size=${size}${q ? `&q=${encodeURIComponent(q)}` : ''}`, { signal })
+export const getSupplier = (storeId, id, { signal } = {}) =>
+  request(`${suppliersPath(storeId)}/${encodeURIComponent(id)}`, { signal })
+export const createSupplier = (storeId, supplier) => post(suppliersPath(storeId), supplier)
+export const updateSupplier = (storeId, id, supplier) =>
+  post(`${suppliersPath(storeId)}/${encodeURIComponent(id)}`, supplier)
+
+const groupsPath = (storeId) => `/api/stores/${encodeURIComponent(storeId)}/product-groups`
+export const getProductGroups = (storeId, { signal } = {}) => request(groupsPath(storeId), { signal })
+export const createProductGroup = (storeId, group) => post(groupsPath(storeId), group)
+export const updateProductGroup = (storeId, id, group) =>
+  post(`${groupsPath(storeId)}/${encodeURIComponent(id)}`, group)
+export const createProductSubgroup = (storeId, groupId, subgroup) =>
+  post(`${groupsPath(storeId)}/${encodeURIComponent(groupId)}/subgroups`, subgroup)
+export const updateProductSubgroup = (storeId, groupId, id, subgroup) =>
+  post(`${groupsPath(storeId)}/${encodeURIComponent(groupId)}/subgroups/${encodeURIComponent(id)}`, subgroup)
+
 export const getPlatformOwners = ({ page = 0, size = 20, signal } = {}) =>
   request(`/api/platform/owners?page=${page}&size=${size}`, { signal })
 export const createPlatformOwner = (owner) => post('/api/platform/owners', owner)
