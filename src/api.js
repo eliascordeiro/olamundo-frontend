@@ -99,6 +99,15 @@ export const grantSellerAccess = (storeId, id, access) =>
   post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}/access`, access)
 export const acceptSellerInvite = (invite) => post('/api/seller-invites/accept', invite)
 
+const customersPath = (storeId) => `/api/stores/${encodeURIComponent(storeId)}/customers`
+export const getCustomers = (storeId, { page = 0, size = 20, q = '', signal } = {}) =>
+  request(`${customersPath(storeId)}?page=${page}&size=${size}${q ? `&q=${encodeURIComponent(q)}` : ''}`, { signal })
+export const getCustomer = (storeId, id, { signal } = {}) =>
+  request(`${customersPath(storeId)}/${encodeURIComponent(id)}`, { signal })
+export const createCustomer = (storeId, customer) => post(customersPath(storeId), customer)
+export const updateCustomer = (storeId, id, customer) =>
+  post(`${customersPath(storeId)}/${encodeURIComponent(id)}`, customer)
+
 export const getPlatformOwners = ({ page = 0, size = 20, signal } = {}) =>
   request(`/api/platform/owners?page=${page}&size=${size}`, { signal })
 export const createPlatformOwner = (owner) => post('/api/platform/owners', owner)

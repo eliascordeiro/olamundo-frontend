@@ -134,6 +134,15 @@ Uma conta passa a **criar lojas** somente quando e proprietario ativo
 tela mostra **Criar loja**; a nova loja e selecionada e a conta vira seu
 proprietario. Contas comuns veem apenas a orientacao de pedir um vinculo.
 
+## Clientes
+
+A secao **Clientes** lista os clientes da **empresa** (compartilhados por todas as lojas dela),
+com busca no servidor por nome, CPF/CNPJ ou telefone, paginacao de 20, cadastro e edicao.
+Qualquer membro da loja pode consultar, cadastrar e editar. CPF/CNPJ invalido e duplicado sao
+recusados pelo backend e exibidos. Cadastro com resposta perdida conserva o envio
+(**Confirmar mesmo cadastro**) e a edicao usa versao (conflito exige **Recarregar cadastro**).
+Dados de credito do legado nao existem no sistema. Publique o backend (migracao V10) antes deste frontend.
+
 ## Direcao de negocio e legado Murimel
 
 A area **Vendas** explica o fluxo comercial levantado nos fontes do Murimel:

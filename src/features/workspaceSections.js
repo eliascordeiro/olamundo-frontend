@@ -4,6 +4,7 @@ const workspaceSections = [
   { id: 'catalog', label: 'Catálogo', icon: 'products' },
   { id: 'inventory', label: 'Estoque', icon: 'inventory' },
   { id: 'orders', label: 'Pedidos internos', icon: 'orders' },
+  { id: 'customers', label: 'Clientes', icon: 'user' },
   { id: 'team', label: 'Equipe e vendedores', icon: 'user' },
 ]
 
