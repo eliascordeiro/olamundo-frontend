@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useCreateProduct, useProducts, useStore, useStores } from './queries'
+import { useCreateProduct, useCreateStore, useProducts, useStore, useStores } from './queries'
 import StockPanel from '../inventory/StockPanel'
 import QueryError from '../../components/QueryError'
 import OrdersPanel from '../orders/OrdersPanel'
@@ -198,10 +198,40 @@ function SelectedStore({ userId, storeId, section, onSectionChange }) {
   return <ProductCatalog userId={userId} store={store.data} section={section} onSectionChange={onSectionChange} />
 }
 
-export default function StoreCatalog({ userId, section, onSectionChange }) {
+function NewStoreForm({ userId, onCreated }) {
+  const mutation = useCreateStore(userId)
+  const [name, setName] = useState('')
+  const [error, setError] = useState('')
+
+  async function submit(event) {
+    event.preventDefault()
+    setError('')
+    try {
+      const store = await mutation.mutateAsync(name.trim())
+      setName('')
+      onCreated(store.id)
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  return <form className="product-form" aria-label="Criar loja" onSubmit={submit}>
+    <h3>Nova loja</h3>
+    <p className="catalog-hint">Você será o proprietário da loja e poderá cadastrar produtos, estoque e equipe nela.</p>
+    <fieldset disabled={mutation.isPending}>
+      <label>Nome da nova loja<input required minLength={2} maxLength={100}
+        value={name} onChange={(event) => setName(event.target.value)} /></label>
+      {error && <div className="alert alert-error" role="alert">{error}</div>}
+      <button className="primary-button" type="submit">{mutation.isPending ? 'Criando loja...' : 'Criar loja'}</button>
+    </fieldset>
+  </form>
+}
+
+export default function StoreCatalog({ userId, section, onSectionChange, canCreateStore = false }) {
   const stores = useStores(userId)
   const [selectedId, setSelectedId] = useState('')
   const availableStores = stores.data?.pages.flatMap((page) => page.content) ?? []
+  const noStores = !stores.isPending && !(stores.isError && !stores.data) && availableStores.length === 0
 
   return <section className="store-catalog" aria-label="Lojas e operações">
     <div className="store-context">
@@ -211,7 +241,9 @@ export default function StoreCatalog({ userId, section, onSectionChange }) {
       : stores.isError && !stores.data ? <QueryError query={stores} label="Não foi possível carregar as lojas" />
         : <>
           {availableStores.length === 0
-            ? <p className="empty-state">Você ainda não participa de uma loja. Solicite um vínculo ao proprietário ou crie uma loja pela API.</p>
+            ? <p className="empty-state">{canCreateStore
+              ? 'Você ainda não tem lojas. Crie a primeira abaixo.'
+              : 'Você ainda não participa de uma loja. Solicite um vínculo ao proprietário.'}</p>
             : <label className="store-select">Loja ativa
               <select value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
                 <option value="">Selecione uma loja</option>
@@ -232,6 +264,8 @@ export default function StoreCatalog({ userId, section, onSectionChange }) {
       </div>
       <p className="store-context-note"><Icon name="shield" size={17} /> Produtos, estoque e pedidos<br />isolados por loja e perfil.</p>
     </div>
+    {canCreateStore && (noStores || !selectedId) && !stores.isPending && !(stores.isError && !stores.data) &&
+      <NewStoreForm userId={userId} onCreated={setSelectedId} />}
     {!selectedId && !stores.isPending && !stores.isError && availableStores.length > 0 && <div className="store-start">
       <span className="welcome-icon"><Icon name="store" size={30} /></span>
       <h2>Qual loja vamos organizar hoje?</h2><p>Selecione uma loja acima para acessar suas operações.<br />Você verá somente os dados e ações permitidos para seu perfil.</p>

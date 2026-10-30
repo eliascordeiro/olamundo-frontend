@@ -59,6 +59,7 @@ export const getStores = ({ page = 0, size = 20, signal } = {}) =>
   request(`/api/stores?page=${page}&size=${size}`, { signal })
 export const getStore = (storeId, { signal } = {}) =>
   request(`/api/stores/${encodeURIComponent(storeId)}`, { signal })
+export const createStore = (name) => post('/api/stores', { name })
 export const getProducts = (storeId, { page = 0, size = 20, signal } = {}) =>
   request(`/api/stores/${encodeURIComponent(storeId)}/products?page=${page}&size=${size}`, { signal })
 export const createProduct = (storeId, product) =>

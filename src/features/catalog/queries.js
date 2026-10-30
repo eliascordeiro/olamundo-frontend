@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createProduct, getProducts, getStore, getStores } from '../../api'
+import { createProduct, createStore, getProducts, getStore, getStores } from '../../api'
 import { sessionKey } from '../../queries'
 
 const storesKey = (userId) => ['stores', userId]
@@ -18,6 +18,14 @@ export function useStores(userId) {
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.hasNext ? lastPage.page + 1 : undefined,
     enabled: () => isCurrentUser(client, userId),
+  })
+}
+
+export function useCreateStore(userId) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (name) => createStore(name),
+    onSuccess: () => isCurrentUser(client, userId) && client.invalidateQueries({ queryKey: storesKey(userId) }),
   })
 }
 

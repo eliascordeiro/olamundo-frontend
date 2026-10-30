@@ -168,7 +168,7 @@ function Workspace({ user }) {
       <main className="workspace-body" id="workspace-content" tabIndex={-1}>
         <div className="workspace-intro"><div><span className="section-kicker">CADA ATENDIMENTO COMEÇA COM ORGANIZAÇÃO</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Produtos, estoque e pedidos. No contexto certo, para atender melhor.</p></div><span className="retail-signature"><Icon name="sofa" size={22} /> Sua loja, mais próxima.</span></div>
         {error && <div className="alert alert-error" role="alert">{error}</div>}
-        <StoreCatalog userId={user.id} section={section} onSectionChange={changeSection} />
+        <StoreCatalog userId={user.id} section={section} onSectionChange={changeSection} canCreateStore={user.platformOwner === true} />
       </main>
     </div>
   </div>

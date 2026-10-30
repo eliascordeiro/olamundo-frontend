@@ -78,7 +78,7 @@ a camada HTTP existente em `src/api.js`, preservando cookies e CSRF.
   Trocar de loja desmonta o formulario e cancela consultas antigas.
 - Erros de consulta sao mostrados com tentativa manual, sem fingir uma lista vazia.
 
-Criacao de lojas e inclusao de membros continuam pela API/Swagger. Ainda nao
+Inclusao de membros continua pela API/Swagger; lojas sao criadas pela tela (proprietarios ativos). Ainda nao
 existem telas para imagens, edicao/exclusao de produtos ou checkout.
 
 ## Equipe e vendedores
@@ -122,6 +122,11 @@ unico); nao ha envio de e-mail, entregue-o por canal seguro. O convidado abre
 `/?convite=...`, define nome e senha, e depois entra pelo login normal. O token
 e removido da barra de enderecos ao carregar. Se o e-mail ja tem conta, o
 proprietario e ativado sem convite. Nao importa dados do legado nem cria lojas.
+
+Uma conta passa a **criar lojas** somente quando e proprietario ativo
+(`platformOwner` em `/api/auth/me`): sem lojas, ou sem nenhuma selecionada, a
+tela mostra **Criar loja**; a nova loja e selecionada e a conta vira seu
+proprietario. Contas comuns veem apenas a orientacao de pedir um vinculo.
 
 ## Direcao de negocio e legado Murimel
 
