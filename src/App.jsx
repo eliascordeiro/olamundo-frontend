@@ -174,29 +174,31 @@ function Workspace({ user }) {
   </div>
 }
 
-function readInviteToken() {
+function readInvite() {
   const params = new URLSearchParams(window.location.search)
-  const token = params.get('convite')
-  if (token === null) return ''
+  const kinds = { convite: 'owner', acesso: 'seller' }
+  const param = Object.keys(kinds).find(name => params.get(name) !== null)
+  if (!param) return null
+  const invite = { token: params.get(param), kind: kinds[param] }
   // Remove o token da barra de endereço para não vazar em histórico ou referrer.
-  params.delete('convite')
+  Object.keys(kinds).forEach(name => params.delete(name))
   const query = params.toString()
   window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`)
-  return token
+  return invite
 }
 
-const initialInviteToken = readInviteToken()
+const initialInvite = readInvite()
 
 function App() {
   const session = useSession()
   const user = session.data
   const checking = session.isPending || (session.isError && session.isFetching)
-  const [inviteToken, setInviteToken] = useState(initialInviteToken)
+  const [invite, setInvite] = useState(initialInvite)
 
   if (checking || session.isError) return <main className="startup-screen"><Brand />{checking ? <p role="status"><span className="spinner" /> Preparando seu workspace...</p> : <><div className="alert alert-error" role="alert">{session.error.message}</div><button className="primary-button" onClick={() => session.refetch()}>Tentar novamente <Icon name="arrow" /></button></>}</main>
   if (user?.platformAdmin) return <PlatformConsole key={user.id} user={user} />
   if (user) return <Workspace key={user.id} user={user} />
-  if (inviteToken) return <AcceptInvite token={inviteToken} onDone={() => setInviteToken('')} />
+  if (invite) return <AcceptInvite token={invite.token} kind={invite.kind} onDone={() => setInvite(null)} />
   return <main className="login-layout"><BusinessPanel /><AuthForm /></main>
 }
 

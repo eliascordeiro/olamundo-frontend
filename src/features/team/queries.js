@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createSalesperson, getSalespeople, getSalesperson, linkSalesperson, updateSalesperson } from '../../api'
+import { createSalesperson, getSalespeople, getSalesperson, grantSellerAccess, linkSalesperson, updateSalesperson } from '../../api'
 import { sessionKey } from '../../queries'
 import useIdempotentOperation from '../../useIdempotentOperation'
 
@@ -37,6 +37,21 @@ export function useCreateSalesperson(userId, storeId) {
     mutationKey: ['create-salesperson', userId, storeId],
     mutationFn: registration => createSalesperson(storeId, registration),
     onSuccess: () => client.invalidateQueries({ queryKey: teamKey(userId, storeId) }),
+  })
+}
+
+export function useGrantSellerAccess(userId, storeId, id) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (access) => grantSellerAccess(storeId, id, access),
+    onSuccess: async ({ seller }) => {
+      if (!currentUser(client, userId)) return
+      await client.cancelQueries({ queryKey: personKey(userId, storeId, id) })
+      if (!currentUser(client, userId)) return
+      client.setQueryData(personKey(userId, storeId, id), seller)
+      // O acesso pode criar cadastros em outras lojas do proprietario.
+      await client.invalidateQueries({ queryKey: ['salespeople', userId] })
+    },
   })
 }
 

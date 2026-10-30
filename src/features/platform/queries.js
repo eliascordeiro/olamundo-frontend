@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { acceptOwnerInvite, createPlatformOwner, getPlatformOwners, invitePlatformOwner } from '../../api'
+import { acceptOwnerInvite, acceptSellerInvite, createPlatformOwner, getPlatformOwners, invitePlatformOwner } from '../../api'
 import { sessionKey } from '../../queries'
 import useIdempotentOperation from '../../useIdempotentOperation'
 
@@ -37,4 +37,8 @@ export function useInvitePlatformOwner(userId) {
 
 export function useAcceptOwnerInvite() {
   return useMutation({ mutationFn: acceptOwnerInvite })
+}
+
+export function useAcceptSellerInvite() {
+  return useMutation({ mutationFn: acceptSellerInvite })
 }

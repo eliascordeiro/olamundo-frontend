@@ -25,6 +25,11 @@
 .team-form button { margin-top: 16px; }
 .team-form .alert { margin-top: 14px; }
 .team-account { font-size: 12px; overflow-wrap: anywhere; }
+.team-form .team-stores { margin: 8px 0 12px; padding: 12px; border: 1px solid #dfe8df; border-radius: 10px; background: #fff; }
+.team-stores legend { font-size: 12px; font-weight: 600; color: #34463e; padding: 0 6px; }
+.team-store-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.team-store-row .team-checkbox { margin: 8px 0; flex: 1; min-width: 140px; }
+.team-store-row select { padding: 8px; border: 1px solid #dce3dd; border-radius: 8px; font: inherit; background: #fff; }
 .team-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 @media (max-width: 900px) { .team-editor-grid { grid-template-columns: 1fr; } }
 @media (max-width: 650px) {

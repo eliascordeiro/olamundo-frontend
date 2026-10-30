@@ -34,9 +34,10 @@ test('vínculo inválido preserva conta e conflito exige recarregar antes de edi
   api.salespeople.north = [{ id: 'seller', storeId: 'north', name: 'Original', active: true, userId: null, version: 0 }]
   await openTeam(page)
   await page.getByRole('button', { name: 'Gerenciar Original', exact: true }).click()
-  await page.getByLabel('E-mail da conta já participante', { exact: true }).fill('fora@example.com')
+  api.accessError = { status: 400, message: 'A loja deste cadastro deve estar na lista.' }
+  await page.getByLabel('E-mail da conta', { exact: true }).fill('fora@example.com')
   await page.getByRole('button', { name: 'Vincular conta', exact: true }).click()
-  await expect(page.getByRole('alert')).toContainText('Conta não participa desta loja')
+  await expect(page.getByRole('alert')).toContainText('A loja deste cadastro deve estar na lista')
   expect(api.salespeople.north[0].userId).toBeNull()
   api.salespeople.north[0].name = 'Outra edição'
   api.salespeople.north[0].version = 1

@@ -26,7 +26,7 @@ test('equipe persiste no backend real e não muda o acesso do vendedor', async (
   await page.getByRole('button', { name: 'Cadastrar vendedor', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Vendedor do backend real', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Gerenciar Vendedor do backend real', exact: true }).click()
-  await page.getByLabel('E-mail da conta já participante', { exact: true }).fill(memberEmail)
+  await page.getByLabel('E-mail da conta', { exact: true }).fill(memberEmail)
   await page.getByRole('button', { name: 'Vincular conta', exact: true }).click()
   await expect(page.getByText('Conta vinculada:', { exact: false })).toBeVisible()
   await page.getByLabel('Vendedor ativo', { exact: true }).uncheck()

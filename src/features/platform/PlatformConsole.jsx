@@ -3,38 +3,10 @@ import Icon from '../../components/Icon'
 import QueryError from '../../components/QueryError'
 import { useLogout } from '../../queries'
 import { useCreatePlatformOwner, useInvitePlatformOwner, usePlatformOwners } from './queries'
+import InviteResult from './InviteResult'
 import './platform.css'
 
 const statusLabels = { PENDING: 'Aguardando convite', INVITED: 'Convite emitido', ACTIVE: 'Ativo' }
-
-const inviteLink = (token) => `${window.location.origin}/?convite=${encodeURIComponent(token)}`
-
-function InviteResult({ issued, onDismiss }) {
-  const [copied, setCopied] = useState(false)
-  const link = inviteLink(issued.token)
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(link)
-      setCopied(true)
-    } catch {
-      setCopied(false)
-    }
-  }
-
-  return <div className="platform-invite" role="status" aria-label="Convite emitido">
-    <strong>Convite para {issued.name}</strong>
-    <p className="catalog-hint">
-      Este link é exibido uma única vez, vale até {new Date(issued.expiresAt).toLocaleString('pt-BR')} e
-      só pode ser usado uma vez. Envie ao proprietário por um canal seguro; ele definirá a própria senha.
-    </p>
-    <code>{link}</code>
-    <div className="platform-actions">
-      <button type="button" className="secondary-button" onClick={copy}>{copied ? 'Link copiado' : 'Copiar link'}</button>
-      <button type="button" className="secondary-button" onClick={onDismiss}>Fechar convite</button>
-    </div>
-  </div>
-}
 
 function NewOwner({ userId, onResult }) {
   const creation = useCreatePlatformOwner(userId)
@@ -148,7 +120,7 @@ export default function PlatformConsole({ user }) {
         <p>Cada proprietário administra suas próprias lojas e equipes. Este console não acessa dados de lojas.</p></div></div>
       {error && <div className="alert alert-error" role="alert">{error}</div>}
       {notice && <div className="alert alert-success" role="status">{notice}</div>}
-      {issued && <InviteResult issued={issued} onDismiss={() => setIssued(null)} />}
+      {issued && <InviteResult issued={issued} param="convite" onDismiss={() => setIssued(null)} />}
       {query.isPending ? <p role="status">Carregando proprietários...</p>
         : query.isError ? <QueryError query={query} label="Não foi possível carregar os proprietários" />
           : <>

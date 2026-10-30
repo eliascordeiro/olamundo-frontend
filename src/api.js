@@ -95,6 +95,9 @@ export const updateSalesperson = (storeId, id, update) =>
   post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}`, update)
 export const linkSalesperson = (storeId, id, account) =>
   post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}/account`, account)
+export const grantSellerAccess = (storeId, id, access) =>
+  post(`${salespeoplePath(storeId)}/${encodeURIComponent(id)}/access`, access)
+export const acceptSellerInvite = (invite) => post('/api/seller-invites/accept', invite)
 
 export const getPlatformOwners = ({ page = 0, size = 20, signal } = {}) =>
   request(`/api/platform/owners?page=${page}&size=${size}`, { signal })

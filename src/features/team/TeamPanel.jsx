@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon'
 import QueryError from '../../components/QueryError'
-import { useCreateSalesperson, useSalespeople, useSalesperson, useSaveSalesperson } from './queries'
+import { useCreateSalesperson, useGrantSellerAccess, useSalespeople, useSalesperson, useSaveSalesperson } from './queries'
+import { useStores } from '../catalog/queries'
+import InviteResult from '../platform/InviteResult'
 import './team.css'
 
 function NewSalesperson({ userId, storeId }) {
@@ -39,29 +41,105 @@ function NewSalesperson({ userId, storeId }) {
   </form>
 }
 
-function SalespersonEditor({ userId, storeId, seller, onSaved, onRefresh, refreshing }) {
+const roleOptions = [['STAFF', 'Colaborador'], ['MANAGER', 'Gerente']]
+
+function AccessForm({ userId, store, seller, disabled, onError, onGranted, onUnlink }) {
+  const access = useGrantSellerAccess(userId, store.id, seller.id)
+  const stores = useStores(userId)
+  const [email, setEmail] = useState('')
+  const [grants, setGrants] = useState({ [store.id]: 'STAFF' })
+  const [issued, setIssued] = useState(null)
+  const ownedStores = (stores.data?.pages.flatMap(page => page.content) ?? []).filter(item => item.role === 'OWNER')
+
+  function toggle(id, checked) {
+    setGrants(previous => {
+      const next = { ...previous }
+      if (checked) next[id] = 'STAFF'
+      else delete next[id]
+      return next
+    })
+  }
+
+  async function submit(event) {
+    event.preventDefault()
+    onError('')
+    setIssued(null)
+    try {
+      const result = await access.mutateAsync({
+        email: email.trim(), version: seller.version,
+        stores: Object.entries(grants).map(([storeId, role]) => ({ storeId, role })),
+      })
+      setEmail('')
+      if (result.inviteToken) {
+        setIssued({ name: email.trim(), token: result.inviteToken, expiresAt: result.expiresAt })
+        onGranted('Esta pessoa ainda não tem conta. Envie o convite abaixo para ela definir a senha e acessar as lojas escolhidas.')
+      } else {
+        onGranted('Conta vinculada e acesso concedido nas lojas escolhidas. Quem já era membro manteve o perfil atual.')
+      }
+    } catch (err) {
+      onError(err)
+    }
+  }
+
+  return <form className="team-form" aria-label="Vincular conta do vendedor" onSubmit={submit}>
+    <h3>Conta de acesso</h3>
+    <p className="team-account">{seller.userId ? `Conta vinculada: ${seller.accountEmail ?? seller.userId}` : 'Sem conta vinculada'}</p>
+    <p className="catalog-hint">Informe o e-mail e escolha as lojas em que a pessoa poderá entrar. Sem conta, geramos um convite para ela criar a senha.</p>
+    <fieldset disabled={disabled || access.isPending}>
+      <label>E-mail da conta<input required type="email" maxLength={254}
+        value={email} onChange={event => setEmail(event.target.value)} autoCapitalize="none" /></label>
+      <fieldset className="team-stores"><legend>Lojas com acesso</legend>
+        {stores.isPending && <p role="status" className="catalog-hint">Carregando lojas...</p>}
+        {stores.isError && <p className="catalog-hint">Não foi possível carregar suas outras lojas; o acesso será concedido só nesta loja.</p>}
+        {ownedStores.map(item => <div className="team-store-row" key={item.id}>
+          <label className="team-checkbox"><input type="checkbox" checked={item.id in grants}
+            disabled={item.id === store.id} onChange={event => toggle(item.id, event.target.checked)} />
+            {item.name}{item.id === store.id ? ' (esta loja)' : ''}</label>
+          {item.id in grants && <select aria-label={`Perfil em ${item.name}`} value={grants[item.id]}
+            onChange={event => setGrants(previous => ({ ...previous, [item.id]: event.target.value }))}>
+            {roleOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>}
+        </div>)}
+        {stores.hasNextPage && <button type="button" className="inline-button" disabled={stores.isFetchingNextPage}
+          onClick={() => stores.fetchNextPage()}>Carregar mais lojas</button>}
+      </fieldset>
+      <p className="catalog-hint">Quem já participa de uma loja mantém o perfil atual. Cada loja ganha um cadastro de vendedor ligado à conta.</p>
+      <div className="team-actions">
+        <button type="submit" className="primary-button">{access.isPending ? 'Concedendo...'
+          : seller.userId ? 'Atualizar acesso' : 'Vincular conta'}</button>
+        {seller.userId && <button className="secondary-button" type="button" onClick={onUnlink}>Desvincular conta</button>}
+      </div>
+    </fieldset>
+    {issued && <InviteResult issued={issued} param="acesso" onDismiss={() => setIssued(null)} />}
+  </form>
+}
+
+function SalespersonEditor({ userId, store, seller, onSaved, onRefresh, refreshing }) {
+  const storeId = store.id
   const mutation = useSaveSalesperson(userId, storeId, seller.id)
   const [name, setName] = useState(seller.name)
   const [active, setActive] = useState(seller.active)
-  const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [blocked, setBlocked] = useState(false)
   const disabled = mutation.isPending || refreshing
+
+  function fail(err) {
+    if (!err) return setError('')
+    setError(err.message)
+    if (err.status === 0 || err.status === 408 || err.status === 409 || err.status >= 500) setBlocked(true)
+  }
 
   async function save(account, payload) {
     setError('')
     try {
       const saved = await mutation.mutateAsync({ account, payload: { ...payload, version: seller.version } })
-      if (account) setEmail('')
-      else {
+      if (!account) {
         setName(saved.name)
         setActive(saved.active)
       }
-      onSaved(account ? 'Vínculo comercial atualizado. As permissões da conta não foram alteradas.'
+      onSaved(account ? 'Vínculo comercial removido. As permissões da conta não foram alteradas.'
         : 'Cadastro comercial atualizado. O acesso da conta não foi alterado.')
     } catch (err) {
-      setError(err.message)
-      if (err.status === 0 || err.status === 408 || err.status === 409 || err.status >= 500) setBlocked(true)
+      fail(err)
     }
   }
 
@@ -86,28 +164,14 @@ function SalespersonEditor({ userId, storeId, seller, onSaved, onRefresh, refres
           <button type="submit" className="primary-button">Salvar cadastro comercial</button>
         </fieldset>
       </form>
-      <form className="team-form" aria-label="Vincular conta do vendedor" onSubmit={event => {
-        event.preventDefault()
-        save(true, { email: email.trim() })
-      }}>
-        <h3>Conta de acesso</h3>
-        <p className="team-account">{seller.userId ? `Conta vinculada: ${seller.userId}` : 'Sem conta vinculada'}</p>
-        <p className="catalog-hint">Informe uma conta já cadastrada e participante desta loja. O vínculo não cria acesso nem transforma o perfil em gerente.</p>
-        <fieldset disabled={disabled || blocked}>
-          <label>E-mail da conta já participante<input required type="email" maxLength={254}
-            value={email} onChange={event => setEmail(event.target.value)} autoCapitalize="none" /></label>
-          <div className="team-actions">
-            <button type="submit" className="primary-button">{seller.userId ? 'Substituir vínculo' : 'Vincular conta'}</button>
-            {seller.userId && <button className="secondary-button" type="button"
-              onClick={() => save(true, { email: '' })}>Desvincular conta</button>}
-          </div>
-        </fieldset>
-      </form>
+      <AccessForm userId={userId} store={store} seller={seller} disabled={disabled || blocked}
+        onError={fail} onGranted={onSaved} onUnlink={() => save(true, { email: '' })} />
     </div>
   </div>
 }
 
-function SelectedSalesperson({ userId, storeId, id, onClose }) {
+function SelectedSalesperson({ userId, store, id, onClose }) {
+  const storeId = store.id
   const query = useSalesperson(userId, storeId, id)
   const [revision, setRevision] = useState(0)
   const [notice, setNotice] = useState('')
@@ -124,7 +188,7 @@ function SelectedSalesperson({ userId, storeId, id, onClose }) {
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando cadastro...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o vendedor" />
-        : <SalespersonEditor key={`${id}:${revision}`} userId={userId} storeId={storeId}
+        : <SalespersonEditor key={`${id}:${revision}`} userId={userId} store={store}
           seller={query.data} onSaved={setNotice} onRefresh={refresh} refreshing={query.isFetching} />}
   </section>
 }
@@ -164,7 +228,7 @@ function OwnerTeam({ userId, store }) {
               disabled={!query.data.hasNext || query.isFetching} onClick={() => changePage(page + 1)}>Próxima página</button>
           </nav>
         </>}
-    {selectedId && <SelectedSalesperson key={selectedId} userId={userId} storeId={store.id}
+    {selectedId && <SelectedSalesperson key={selectedId} userId={userId} store={store}
       id={selectedId} onClose={() => setSelectedId('')} />}
     <NewSalesperson userId={userId} storeId={store.id} />
   </>

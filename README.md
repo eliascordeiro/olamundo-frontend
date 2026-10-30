@@ -87,9 +87,15 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
   nome, ativar/inativar e vincular/desvincular uma conta ja participante.
   Gerente/colaborador veem uma explicacao, sem formularios ou consultas de
   vendedores. O backend valida novamente todas as operacoes.
-- O cadastro comercial pode existir sem login. Vincular uma conta por e-mail
-  nao cria conta, membership ou permissao; cada conta tem no maximo um vendedor
-  vinculado por loja (inclusive inativo). Inclusao de membros continua na API.
+- O cadastro comercial pode existir sem login. Em **Conta de acesso** o
+  proprietario informa o e-mail e marca, **pelo nome**, as lojas dele em que a
+  pessoa entrara (a loja atual vem marcada e fixa), com perfil Colaborador ou
+  Gerente por loja. Conta existente e vinculada na hora (cada loja ganha um
+  cadastro de vendedor ligado a ela; quem ja era membro mantem o perfil). Sem
+  conta, a tela mostra um **link de convite** (`/?acesso=...`, exibido uma unica
+  vez, 7 dias, uso unico; nao ha envio de e-mail) e a pessoa define a propria
+  senha. Cada conta tem no maximo um vendedor por loja (inclusive inativo).
+  Desvincular remove so o vinculo comercial desta loja, nao os acessos.
 - Inativar preserva o cadastro comercial, **nao bloqueia login nem revoga
   permissoes**. Nao existe exclusao fisica, comissao ou venda comercial nesta
   entrega. Nenhum dado ou senha do Murimel foi importado.
@@ -104,11 +110,11 @@ existem telas para imagens, edicao/exclusao de produtos ou checkout.
   descarta campos ainda nao salvos; o erro nunca e tratado como sucesso.
   Salvar vinculo nao descarta alteracoes comerciais ainda nao salvas.
 - Nome e situacao comercial sao salvos separadamente do vinculo de conta.
-  A tela informa o ID da conta vinculada (o endpoint nao expoe e-mail/nome de
-  contas). A autoria de criacao/ultima alteracao fica no backend; nao e um
-  historico completo de edicoes.
+  A tela informa o e-mail da conta vinculada. A autoria de criacao/ultima
+  alteracao fica no backend; nao e um historico completo de edicoes.
 
-No Railway, publique primeiro o backend com a migracao V6 e depois este
+No Railway, publique primeiro o backend com a migracao V8 (acesso por lojas) e
+depois este
 frontend. Nao sao necessarias novas variaveis. Valide o fluxo em uma loja
 de teste como OWNER e confirme negacao para MANAGER/STAFF.
 

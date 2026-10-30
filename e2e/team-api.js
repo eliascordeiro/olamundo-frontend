@@ -14,11 +14,13 @@ export async function setupTeam(page) {
   api.dropTeamCreation = false
   api.holdTeam = null
   api.memberEmail = 'vendedor@example.com'
+  api.knownAccounts = [api.memberEmail]
+  api.accessError = null
   api.teamCalls = []
   await page.route('**/api/stores/*/salespeople**', async route => {
     const request = route.request()
     const url = new URL(request.url())
-    const [, storeId, id, action] = url.pathname.match(/^\/api\/stores\/([^/]+)\/salespeople(?:\/([^/]+)(?:\/(account))?)?$/)
+    const [, storeId, id, action] = url.pathname.match(/^\/api\/stores\/([^/]+)\/salespeople(?:\/([^/]+)(?:\/(account|access))?)?$/)
     const method = request.method()
     const body = method === 'POST' ? request.postDataJSON() : undefined
     api.teamCalls.push({ storeId, id, action, method, body, headers: request.headers() })
@@ -51,9 +53,26 @@ export async function setupTeam(page) {
     }
     const seller = api.salespeople[storeId].find(seller => seller.id === id)
     if (body.version !== seller.version) return respond(409, { message: 'Cadastro alterado. Atualize os dados.' })
+    if (action === 'access') {
+      if (api.accessError) return respond(api.accessError.status, { message: api.accessError.message })
+      if (api.knownAccounts.includes(body.email)) {
+        for (const grant of body.stores) {
+          const roster = api.salespeople[grant.storeId] ??= []
+          let target = grant.storeId === storeId ? seller
+            : roster.find(item => item.userId === 'account-vendedor')
+          if (!target) {
+            target = { id: `seller-${grant.storeId}`, storeId: grant.storeId, name: seller.name, active: true, userId: null, version: 0 }
+            roster.push(target)
+          }
+          Object.assign(target, { userId: 'account-vendedor', accountEmail: body.email, version: target.version + 1 })
+        }
+        return respond(200, { seller, inviteToken: null, expiresAt: null })
+      }
+      return respond(200, { seller, inviteToken: 'seller-token', expiresAt: '2030-01-01T12:00:00Z' })
+    }
     if (action) {
-      if (body.email && body.email !== api.memberEmail) return respond(404, { message: 'Conta não participa desta loja.' })
-      seller.userId = body.email ? 'account-vendedor' : null
+      seller.userId = null
+      seller.accountEmail = null
     } else {
       seller.name = body.name
       seller.active = body.active
