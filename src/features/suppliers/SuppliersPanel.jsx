@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon'
+import Modal from '../../components/Modal'
 import QueryError from '../../components/QueryError'
 import { formatDocument } from '../customers/format'
 import { useCreateSupplier, useSaveSupplier, useSupplier, useSuppliers } from './queries'
@@ -51,7 +52,6 @@ function NewSupplier({ userId, storeId, onCreated }) {
   }
 
   return <form className="customer-form" aria-label="Cadastrar fornecedor" onSubmit={submit}>
-    <h3>Novo fornecedor</h3>
     <p className="catalog-hint">O fornecedor é da empresa: todas as lojas dela enxergam este cadastro. Só CNPJ/CPF válidos são aceitos.</p>
     <fieldset disabled={creation.sending}>
       <SupplierFields values={pending ? toValues(pending) : values} disabled={Boolean(pending)}
@@ -100,7 +100,7 @@ function SupplierEditor({ userId, storeId, supplier, canWrite, onSaved, onRefres
   </form>
 }
 
-function SelectedSupplier({ userId, store, canWrite, id, onClose }) {
+function SelectedSupplier({ userId, store, canWrite, id }) {
   const query = useSupplier(userId, store.id, id)
   const [revision, setRevision] = useState(0)
   const [notice, setNotice] = useState('')
@@ -111,9 +111,7 @@ function SelectedSupplier({ userId, store, canWrite, id, onClose }) {
     if (!result.isError) setRevision(previous => previous + 1)
   }
 
-  return <section className="customer-detail" aria-label="Gerenciar fornecedor">
-    <div className="catalog-heading"><h3>Fornecedor</h3>
-      <button type="button" className="secondary-button" onClick={onClose}>Fechar fornecedor</button></div>
+  return <section aria-label="Gerenciar fornecedor">
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando fornecedor...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o fornecedor" />
@@ -128,6 +126,7 @@ export default function SuppliersPanel({ userId, store }) {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState('')
+  const [creating, setCreating] = useState(false)
   const [notice, setNotice] = useState('')
   const suppliers = useSuppliers(userId, store.id, query, page)
 
@@ -142,6 +141,7 @@ export default function SuppliersPanel({ userId, store }) {
     <div className="catalog-heading"><div><span className="section-eyebrow">DE QUEM A EMPRESA COMPRA</span><h2>Fornecedores</h2>
       <p>Cadastro único da empresa, compartilhado por todas as lojas dela. Todos consultam; proprietário e gerente cadastram e editam.</p></div>
       <span className="team-icon"><Icon name="truck" size={28} /></span></div>
+    {canWrite && <button type="button" className="primary-button" onClick={() => { setNotice(''); setCreating(true) }}>+ Novo fornecedor</button>}
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     <label className="customer-search">Buscar fornecedor
       <input type="search" maxLength={100} value={search} placeholder="Nome, CNPJ/CPF ou telefone"
@@ -153,7 +153,7 @@ export default function SuppliersPanel({ userId, store }) {
           {suppliers.data.content.length === 0
             ? <p className="empty-state">{query ? 'Nenhum fornecedor encontrado para esta busca.' : 'Nenhum fornecedor nesta página.'}</p>
             : <ul className="customer-list" aria-label="Fornecedores">{suppliers.data.content.map(supplier =>
-              <li key={supplier.id}>
+              <li key={supplier.id} className={selectedId === supplier.id ? 'customer-selected' : undefined}>
                 <div className="customer-person"><h3>{supplier.name}</h3>
                   <p>{[formatDocument(supplier.document), supplier.phone, supplier.city, supplier.active ? null : 'Inativo'].filter(Boolean).join(' · ') || 'Sem documento ou contato'}</p></div>
                 <button type="button" className="secondary-button" aria-label={`Abrir ${supplier.name}`}
@@ -167,11 +167,13 @@ export default function SuppliersPanel({ userId, store }) {
               onClick={() => { setSelectedId(''); setPage(page + 1) }}>Próxima página</button>
           </nav>
         </>}
-    {selectedId && <SelectedSupplier key={selectedId} userId={userId} store={store} canWrite={canWrite} id={selectedId}
-      onClose={() => setSelectedId('')} />}
-    {canWrite && <NewSupplier userId={userId} storeId={store.id} onCreated={(supplier) => {
-      setNotice(`Fornecedor ${supplier.name} cadastrado.`)
-      setSelectedId(supplier.id)
-    }} />}
+    {selectedId && <Modal title="Fornecedor" onClose={() => setSelectedId('')}>
+      <SelectedSupplier key={selectedId} userId={userId} store={store} canWrite={canWrite} id={selectedId} /></Modal>}
+    {creating && <Modal title="Novo fornecedor" onClose={() => setCreating(false)}>
+      <NewSupplier userId={userId} storeId={store.id} onCreated={(supplier) => {
+        setNotice(`Fornecedor ${supplier.name} cadastrado.`)
+        setCreating(false)
+        setSelectedId(supplier.id)
+      }} /></Modal>}
   </section>
 }

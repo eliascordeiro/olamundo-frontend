@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useCreateProduct, useCreateStore, useProducts, useStore, useStores } from './queries'
 import StockPanel from '../inventory/StockPanel'
 import QueryError from '../../components/QueryError'
+import Modal from '../../components/Modal'
 import OrdersPanel from '../orders/OrdersPanel'
 import { useCreateOrder, useOrderDraft } from '../orders/queries'
 import Icon from '../../components/Icon'
@@ -179,7 +180,8 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
           {stockProduct?.id === product.id ? 'Selecionado' : 'Consultar estoque'}
         </button>
       </div>)}
-    {stockProduct && <StockPanel key={stockProduct.id} userId={userId} store={store} product={stockProduct} />}
+    {stockProduct && <Modal title={`Estoque — ${stockProduct.name}`} onClose={() => setStockProduct(null)}>
+      <StockPanel key={stockProduct.id} userId={userId} store={store} product={stockProduct} /></Modal>}
     {products.data && pagination('produtos')}
   </section>
 

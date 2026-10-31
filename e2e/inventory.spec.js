@@ -53,8 +53,10 @@ test('reenvio apos resposta perdida usa mesmo identificador mesmo trocando de pr
   expect(writes(api)).toHaveLength(1)
   expect(api.stock['north/one']).toBe(5)
   await expect(page.getByLabel('Quantidade (unidades)')).toBeDisabled()
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Cadeira Norte', exact: true }).click()
   await expect(page.getByText('Saldo atual:')).toContainText('0 unidades')
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Sofá Norte', exact: true }).click()
   await expect(page.getByLabel('Quantidade (unidades)')).toHaveValue('5')
   await page.getByRole('button', { name: 'Confirmar mesmo envio', exact: true }).click()
@@ -90,6 +92,7 @@ test('colaborador consulta e erros nao simulam saldo zero; produto e loja isolad
   await page.getByRole('button', { name: 'Registrar movimentação', exact: true }).click()
   await expect(page.getByText('Saldo atual:')).toContainText('9 unidades')
   api.stockStatus['north/two'] = 503
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Cadeira Norte', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível consultar o saldo')
   await expect(page.getByText('Saldo atual:')).toHaveCount(0)
@@ -111,6 +114,7 @@ test('paginacao do historico e layout movel', async ({ page }) => {
     id: `movement-${i}`, type: 'IN', quantity: 1, balanceAfter: 21 - i,
     reason: `Movimento ${21 - i}`, userId: marina.id, createdAt: '2026-10-25T12:00:00Z',
   }))
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Cadeira Norte', exact: true }).click()
   await expect(page.getByText('Movimento 21', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Próximo histórico', exact: true }).click()
@@ -126,6 +130,7 @@ test('logout remove operacao incerta antes de entrar com outra conta', async ({ 
   await draft(page, '2')
   await page.getByRole('button', { name: 'Registrar movimentação', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível conectar')
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Sair', exact: true }).click()
   await page.getByLabel('E-mail', { exact: true }).fill(bruno.email)
   await page.getByLabel('Senha', { exact: true }).fill('a-unique-business-passphrase')
@@ -141,6 +146,7 @@ test('resposta atrasada de estoque nao aparece na outra loja', async ({ page }) 
   const api = await setup(page)
   let release
   api.holdStock['north/two'] = new Promise(resolve => { release = resolve })
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Cadeira Norte', exact: true }).click()
   await expect.poll(() => api.calls.some(call => call.path === '/api/stores/north/products/two/stock')).toBe(true)
   await page.getByLabel('Loja ativa').selectOption('south')
@@ -154,6 +160,7 @@ test('resposta atrasada de estoque nao aparece na outra loja', async ({ page }) 
 test('falha no historico e recuperavel e 401 no estoque encerra sessao', async ({ page }) => {
   const api = await setup(page)
   api.stockHistoryStatus['north/two'] = 503
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Cadeira Norte', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível consultar o histórico')
   await expect(page.getByText('Nenhuma movimentação nesta página.', { exact: true })).toHaveCount(0)
@@ -161,6 +168,7 @@ test('falha no historico e recuperavel e 401 no estoque encerra sessao', async (
   await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click()
   await expect(page.getByText('Nenhuma movimentação nesta página.', { exact: true })).toBeVisible()
   api.stockStatus['north/one'] = 401
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Ver estoque de Sofá Norte', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Bom ter você de volta.', exact: true })).toBeVisible()
   await expect(page.getByText('Saldo atual:')).toHaveCount(0)

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon'
+import Modal from '../../components/Modal'
 import QueryError from '../../components/QueryError'
 import { useCreateGroup, useCreateSubgroup, useProductGroups, useSaveGroup, useSaveSubgroup } from './queries'
 import '../customers/customers.css'
@@ -41,7 +42,7 @@ function toPayload(definition, values) {
   return payload
 }
 
-function DataForm({ ariaLabel, title, definition, source, submitLabel, busy, pendingOperation, run, onDone, onCancel }) {
+function DataForm({ ariaLabel, definition, source, submitLabel, busy, pendingOperation, run, onDone, onCancel }) {
   const [values, setValues] = useState(() => toValues(definition, source))
   const [error, setError] = useState('')
   const shown = pendingOperation ? toValues(definition, pendingOperation) : values
@@ -57,7 +58,6 @@ function DataForm({ ariaLabel, title, definition, source, submitLabel, busy, pen
   }
 
   return <form className="customer-form" aria-label={ariaLabel} onSubmit={submit}>
-    <h3>{title}</h3>
     <fieldset disabled={busy}>
       <div className="customer-fields">{definition.map(([name, label, type, attributes]) => <label key={name}>{label}
         <input {...attributes} inputMode={type === 'number' ? 'decimal' : undefined} disabled={Boolean(pendingOperation)}
@@ -74,30 +74,37 @@ function DataForm({ ariaLabel, title, definition, source, submitLabel, busy, pen
 
 function NewGroupForm({ userId, storeId, ...rest }) {
   const creation = useCreateGroup(userId, storeId)
-  return <DataForm {...rest} ariaLabel="Cadastrar grupo" title="Novo grupo" definition={groupFields} submitLabel="Cadastrar grupo"
+  return <DataForm {...rest} ariaLabel="Cadastrar grupo" definition={groupFields} submitLabel="Cadastrar grupo"
     busy={creation.sending} pendingOperation={creation.pendingOperation} run={payload => creation.submit(payload)} />
 }
 
 function EditGroupForm({ userId, storeId, group, ...rest }) {
   const mutation = useSaveGroup(userId, storeId, group.id)
-  return <DataForm {...rest} ariaLabel={`Editar grupo ${group.name}`} title={`Editar ${group.name}`} definition={groupFields}
+  return <DataForm {...rest} ariaLabel={`Editar grupo ${group.name}`} definition={groupFields}
     source={group} submitLabel="Salvar grupo" busy={mutation.isPending}
     run={payload => mutation.mutateAsync({ ...payload, version: group.version })} />
 }
 
 function NewSubgroupForm({ userId, storeId, group, ...rest }) {
   const creation = useCreateSubgroup(userId, storeId, group.id)
-  return <DataForm {...rest} ariaLabel={`Cadastrar subgrupo em ${group.name}`} title={`Novo subgrupo em ${group.name}`}
+  return <DataForm {...rest} ariaLabel={`Cadastrar subgrupo em ${group.name}`}
     definition={subgroupFields} submitLabel="Cadastrar subgrupo" busy={creation.sending}
     pendingOperation={creation.pendingOperation} run={payload => creation.submit(payload)} />
 }
 
 function EditSubgroupForm({ userId, storeId, group, subgroup, ...rest }) {
   const mutation = useSaveSubgroup(userId, storeId, group.id, subgroup.id)
-  return <DataForm {...rest} ariaLabel={`Editar subgrupo ${subgroup.name}`} title={`Editar ${subgroup.name}`}
+  return <DataForm {...rest} ariaLabel={`Editar subgrupo ${subgroup.name}`}
     definition={subgroupFields} source={subgroup} submitLabel="Salvar subgrupo" busy={mutation.isPending}
     run={payload => mutation.mutateAsync({ ...payload, version: subgroup.version })} />
 }
+
+const formTitle = ({ kind, group, subgroup }) => ({
+  newGroup: 'Novo grupo',
+  editGroup: `Editar ${group?.name}`,
+  newSubgroup: `Novo subgrupo em ${group?.name}`,
+  editSubgroup: `Editar ${subgroup?.name}`,
+})[kind]
 
 const percent = (value) => `${Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`
 
@@ -114,6 +121,7 @@ export default function GroupsPanel({ userId, store }) {
       <p>Grupos e subgrupos da empresa, compartilhados por todas as lojas dela. Todos consultam; proprietário e gerente cadastram e editam.
         Comissões e descontos ficam guardados para as vendas, que ainda não os utilizam.</p></div>
       <span className="team-icon"><Icon name="tag" size={28} /></span></div>
+    {canWrite && <button type="button" className="primary-button" onClick={() => { setNotice(''); setForm({ kind: 'newGroup' }) }}>Novo grupo</button>}
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {groups.isPending ? <p role="status">Carregando grupos...</p>
       : groups.isError ? <QueryError query={groups} label="Não foi possível carregar os grupos" />
@@ -137,11 +145,12 @@ export default function GroupsPanel({ userId, store }) {
                   onClick={() => setForm({ kind: 'editSubgroup', group, subgroup })}>Editar</button>}
               </li>)}</ul>}
           </li>)}</ul>}
-    {canWrite && !form && <button type="button" className="primary-button" onClick={() => setForm({ kind: 'newGroup' })}>Novo grupo</button>}
-    {form?.kind === 'newGroup' && <NewGroupForm {...common} onDone={finish('Grupo cadastrado.')} />}
-    {form?.kind === 'editGroup' && <EditGroupForm key={form.group.id + form.group.version} {...common} group={form.group} onDone={finish('Grupo atualizado.')} />}
-    {form?.kind === 'newSubgroup' && <NewSubgroupForm {...common} group={form.group} onDone={finish('Subgrupo cadastrado.')} />}
-    {form?.kind === 'editSubgroup' && <EditSubgroupForm key={form.subgroup.id + form.subgroup.version} {...common}
+    {form && <Modal title={formTitle(form)} onClose={() => setForm(null)}>
+    {form.kind === 'newGroup' && <NewGroupForm {...common} onDone={finish('Grupo cadastrado.')} />}
+    {form.kind === 'editGroup' && <EditGroupForm key={form.group.id + form.group.version} {...common} group={form.group} onDone={finish('Grupo atualizado.')} />}
+    {form.kind === 'newSubgroup' && <NewSubgroupForm {...common} group={form.group} onDone={finish('Subgrupo cadastrado.')} />}
+    {form.kind === 'editSubgroup' && <EditSubgroupForm key={form.subgroup.id + form.subgroup.version} {...common}
       group={form.group} subgroup={form.subgroup} onDone={finish('Subgrupo atualizado.')} />}
+    </Modal>}
   </section>
 }

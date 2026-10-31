@@ -27,6 +27,7 @@ test('menu navega entre operações sem perder a loja ativa ou o perfil', async 
   await page.getByRole('button', { name: 'Ver estoque de Produto Norte', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Estoque — Produto Norte', exact: true })).toBeVisible()
 
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Pedidos da loja', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Pedidos', exact: true })).toBeVisible()
   await page.getByLabel('Loja ativa').selectOption('south')

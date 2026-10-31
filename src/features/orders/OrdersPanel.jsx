@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import Modal from '../../components/Modal'
 import QueryError from '../../components/QueryError'
 import { useCancelOrder, useConfirmOrder, useOrder, useOrders } from './queries'
 import './orders.css'
@@ -185,6 +186,7 @@ export default function OrdersPanel({ userId, store, draft, creation, selectedId
         disabled={orders.isError || !orders.data?.hasNext || orders.isFetching}
         onClick={() => setPage(value => value + 1)}>Próximos pedidos</button>
     </nav>
-    {selectedId && <OrderDetail key={selectedId} userId={userId} store={store} orderId={selectedId} />}
+    {selectedId && <Modal title="Pedido" onClose={() => onSelectOrder('')}>
+      <OrderDetail key={selectedId} userId={userId} store={store} orderId={selectedId} /></Modal>}
   </section>
 }

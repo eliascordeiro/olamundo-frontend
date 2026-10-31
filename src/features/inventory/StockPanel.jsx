@@ -71,7 +71,6 @@ export default function StockPanel({ userId, store, product }) {
   const canWrite = store.role === 'OWNER' || store.role === 'MANAGER'
 
   return <section className="stock-panel" aria-label={`Estoque de ${product.name}`}>
-    <h3>Estoque — {product.name}</h3>
     <p className="catalog-hint">Unidades inteiras, sem reservas. Pedidos confirmados também geram saídas. Saldo inicial zero.</p>
     {balance.isPending ? <p role="status">Carregando saldo...</p>
       : balance.isError ? <QueryError query={balance} label="Não foi possível consultar o saldo" />

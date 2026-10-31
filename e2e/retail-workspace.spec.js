@@ -40,8 +40,10 @@ test('varejo mantém o pedido e os valores reais ao navegar pelo futuro fluxo de
   await expect(page.getByText('Total do pedido:')).toContainText('R$ 3.799,80')
   expect(api.stock['north/sofa']).toBe(5)
   const orderId = api.orders.north[0].summary.id
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Vendas', exact: true }).click()
   await page.getByRole('button', { name: 'Abrir pedidos internos', exact: true }).click()
+  await page.getByRole('button', { name: `Ver pedido ${orderId}`, exact: true }).click()
   await expect(page.getByRole('heading', { name: `Pedido ${orderId}`, exact: true })).toBeVisible()
   await page.reload()
   await page.getByLabel('Loja ativa').selectOption('north')

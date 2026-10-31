@@ -16,15 +16,18 @@ async function setup(page, role = 'OWNER') {
 }
 
 async function add(page, name = 'Produto Norte') {
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Catálogo', exact: true }).click()
   await page.getByRole('button', { name: `Adicionar ${name} ao pedido`, exact: true }).click()
 }
 
 async function orders(page) {
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Pedidos da loja', exact: true }).click()
 }
 
 async function viewStock(page, name) {
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Catálogo', exact: true }).click()
   await page.getByRole('button', { name: `Ver estoque de ${name}`, exact: true }).click()
 }
@@ -229,7 +232,9 @@ test('lista atrasada de outra loja nao reaparece e revogacao bloqueia confirmaca
 })
 
 async function openCancellation(page, reason = 'Desistencia interna') {
-  await page.getByRole('button', { name: 'Cancelar pedido', exact: true }).click()
+  const cancel = page.getByRole('button', { name: 'Cancelar pedido', exact: true })
+  if (!(await cancel.isVisible())) await page.getByRole('button', { name: /^Ver pedido/ }).first().click()
+  await cancel.click()
   await page.getByLabel('Motivo do cancelamento', { exact: true }).fill(reason)
 }
 
@@ -254,6 +259,7 @@ test('gerente cancela confirmado, devolve estoque e preserva valores e auditoria
   await viewStock(page, 'Produto Norte')
   await expect(page.getByText('Saldo atual:')).toContainText('10 unidades')
   await orders(page)
+  await page.getByRole('button', { name: /^Ver pedido/ }).first().click()
   await expect(page.getByText('Motivo: Desistencia interna', { exact: true })).toBeVisible()
   await expect(page.getByText('Estoque devolvido integralmente.', { exact: false })).toBeVisible()
   expect(cancellations(api)[0].body).toEqual({ reason: 'Desistencia interna' })
@@ -406,6 +412,7 @@ test('logout descarta cancelamento incerto antes da proxima conta', async ({ pag
   api.cancelOrderStatus = 503
   await page.getByRole('button', { name: 'Confirmar cancelamento definitivo', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Cancelamento recusado')
+  await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Sair', exact: true }).click()
   await page.getByLabel('E-mail', { exact: true }).fill(bruno.email)
   await page.getByLabel('Senha', { exact: true }).fill('a-unique-business-passphrase')

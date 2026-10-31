@@ -1,32 +1,30 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon'
+import Modal from '../../components/Modal'
 import QueryError from '../../components/QueryError'
 import { useCreateSalesperson, useGrantSellerAccess, useSalespeople, useSalesperson, useSaveSalesperson } from './queries'
 import { useStores } from '../catalog/queries'
 import InviteResult from '../platform/InviteResult'
 import './team.css'
 
-function NewSalesperson({ userId, storeId }) {
+function NewSalesperson({ userId, storeId, onCreated }) {
   const creation = useCreateSalesperson(userId, storeId)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
 
   async function submit(event) {
     event.preventDefault()
     setError('')
-    setNotice('')
     try {
-      await creation.submit({ name: name.trim() })
+      const seller = await creation.submit({ name: name.trim() })
       setName('')
-      setNotice('Vendedor cadastrado. Nenhuma conta ou permissão foi criada.')
+      onCreated(seller)
     } catch (err) {
       setError(err.message)
     }
   }
 
   return <form className="team-form" aria-label="Cadastrar vendedor" onSubmit={submit}>
-    <h3>Novo vendedor</h3>
     <p className="catalog-hint">O cadastro comercial pode existir sem login, preservando a identidade do vendedor para as próximas etapas.</p>
     <fieldset disabled={creation.sending}>
       <label>Nome do novo vendedor<input required minLength={2} maxLength={120}
@@ -34,7 +32,6 @@ function NewSalesperson({ userId, storeId }) {
         onChange={event => setName(event.target.value)} /></label>
       {creation.pendingOperation && <p className="catalog-hint" role="status">Há um cadastro aguardando confirmação. Confirme o mesmo envio para evitar duplicação.</p>}
       {error && <div className="alert alert-error" role="alert">{error}</div>}
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
       <button className="primary-button" type="submit">{creation.sending ? 'Cadastrando...'
         : creation.pendingOperation ? 'Confirmar mesmo cadastro' : 'Cadastrar vendedor'}</button>
     </fieldset>
@@ -170,7 +167,7 @@ function SalespersonEditor({ userId, store, seller, onSaved, onRefresh, refreshi
   </div>
 }
 
-function SelectedSalesperson({ userId, store, id, onClose }) {
+function SelectedSalesperson({ userId, store, id }) {
   const storeId = store.id
   const query = useSalesperson(userId, storeId, id)
   const [revision, setRevision] = useState(0)
@@ -182,9 +179,7 @@ function SelectedSalesperson({ userId, store, id, onClose }) {
     if (!result.isError) setRevision(previous => previous + 1)
   }
 
-  return <section className="team-detail" aria-label="Gerenciar vendedor">
-    <div className="catalog-heading"><h3>Gerenciar vendedor</h3>
-      <button type="button" className="secondary-button" onClick={onClose}>Fechar cadastro</button></div>
+  return <section aria-label="Gerenciar vendedor">
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando cadastro...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o vendedor" />
@@ -196,6 +191,8 @@ function SelectedSalesperson({ userId, store, id, onClose }) {
 function OwnerTeam({ userId, store }) {
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [notice, setNotice] = useState('')
   const query = useSalespeople(userId, store.id, page)
 
   function changePage(next) {
@@ -207,12 +204,14 @@ function OwnerTeam({ userId, store }) {
     <div className="team-section-heading"><h3>Vendedores da loja</h3>
       <button type="button" className="secondary-button" disabled={query.isFetching}
         onClick={() => query.refetch()}>Atualizar vendedores</button></div>
+    <button type="button" className="primary-button" onClick={() => { setNotice(''); setCreating(true) }}>+ Novo vendedor</button>
+    {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando vendedores...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível carregar os vendedores" />
         : <>
           {query.data.content.length === 0 ? <p className="empty-state">Nenhum vendedor nesta página.</p>
             : <ul className="team-list" aria-label={`Vendedores de ${store.name}`}>{query.data.content.map(seller =>
-              <li key={seller.id}>
+              <li key={seller.id} className={selectedId === seller.id ? 'team-selected' : undefined}>
                 <span className="team-avatar"><Icon name="user" size={22} /></span>
                 <div className="team-person"><h3>{seller.name}</h3>
                   <p>{seller.userId ? 'Com conta de acesso vinculada' : 'Cadastro comercial sem login'}</p></div>
@@ -228,9 +227,14 @@ function OwnerTeam({ userId, store }) {
               disabled={!query.data.hasNext || query.isFetching} onClick={() => changePage(page + 1)}>Próxima página</button>
           </nav>
         </>}
-    {selectedId && <SelectedSalesperson key={selectedId} userId={userId} store={store}
-      id={selectedId} onClose={() => setSelectedId('')} />}
-    <NewSalesperson userId={userId} storeId={store.id} />
+    {selectedId && <Modal title="Gerenciar vendedor" onClose={() => setSelectedId('')}>
+      <SelectedSalesperson key={selectedId} userId={userId} store={store} id={selectedId} /></Modal>}
+    {creating && <Modal title="Novo vendedor" onClose={() => setCreating(false)}>
+      <NewSalesperson userId={userId} storeId={store.id} onCreated={(seller) => {
+        setNotice('Vendedor cadastrado. Nenhuma conta ou permissão foi criada.')
+        setCreating(false)
+        setSelectedId(seller.id)
+      }} /></Modal>}
   </>
 }
 
