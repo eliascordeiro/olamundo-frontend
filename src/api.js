@@ -52,6 +52,11 @@ async function post(path, body) {
   })
 }
 
+async function remove(path) {
+  const { token } = await request('/api/auth/csrf')
+  return request(path, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': token } })
+}
+
 export const login = (email, password) => post('/api/auth/login', { email, password })
 export const register = (name, email, password) => post('/api/auth/register', { name, email, password })
 export const logout = () => post('/api/auth/logout')
@@ -107,6 +112,15 @@ export const getCustomer = (storeId, id, { signal } = {}) =>
 export const createCustomer = (storeId, customer) => post(customersPath(storeId), customer)
 export const updateCustomer = (storeId, id, customer) =>
   post(`${customersPath(storeId)}/${encodeURIComponent(id)}`, customer)
+
+const addressesPath = (storeId, customerId) => `${customersPath(storeId)}/${encodeURIComponent(customerId)}/delivery-addresses`
+export const getDeliveryAddresses = (storeId, customerId, { signal } = {}) =>
+  request(addressesPath(storeId, customerId), { signal })
+export const createDeliveryAddress = (storeId, customerId, address) => post(addressesPath(storeId, customerId), address)
+export const updateDeliveryAddress = (storeId, customerId, id, address) =>
+  post(`${addressesPath(storeId, customerId)}/${encodeURIComponent(id)}`, address)
+export const deleteDeliveryAddress = (storeId, customerId, id, version) =>
+  remove(`${addressesPath(storeId, customerId)}/${encodeURIComponent(id)}?version=${encodeURIComponent(version)}`)
 
 const suppliersPath = (storeId) => `/api/stores/${encodeURIComponent(storeId)}/suppliers`
 export const getSuppliers = (storeId, { page = 0, size = 20, q = '', signal } = {}) =>

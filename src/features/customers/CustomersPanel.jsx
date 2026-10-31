@@ -3,6 +3,7 @@ import Icon from '../../components/Icon'
 import QueryError from '../../components/QueryError'
 import { useCreateCustomer, useCustomer, useCustomers, useSaveCustomer } from './queries'
 import { formatDocument } from './format'
+import DeliveryAddresses from './DeliveryAddresses'
 import './customers.css'
 
 const fields = [
@@ -120,6 +121,7 @@ function SelectedCustomer({ userId, storeId, id, onClose }) {
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o cliente" />
         : <CustomerEditor key={`${id}:${revision}`} userId={userId} storeId={storeId} customer={query.data}
           onSaved={setNotice} onRefresh={refresh} refreshing={query.isFetching} />}
+    {query.data && <DeliveryAddresses userId={userId} storeId={storeId} customerId={id} />}
   </section>
 }
 

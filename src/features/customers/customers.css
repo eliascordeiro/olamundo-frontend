@@ -20,3 +20,7 @@
   .customer-form, .customer-detail { padding: 14px; }
   .customer-list li > button { width: 100%; }
 }
+.delivery-addresses { margin-top: 28px; border-top: 1px solid var(--b-e1e9e2); padding-top: 20px; min-width: 0; }
+.delivery-addresses h3 { font-size: 16px; }
+.delivery-addresses h4 { font-size: 14px; margin: 0 0 12px; }
+.delivery-addresses .customer-form button + button { margin-left: 10px; }

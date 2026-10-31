@@ -9,9 +9,38 @@ async function setupCustomers(page, { role = 'OWNER' } = {}) {
   api.customersStatus = 200
   api.dropCustomerCreation = false
   api.customerWriteStatus = 200
+  api.addresses = []
+  api.addressCalls = []
+  api.addressWriteStatus = 200
+  await page.route('**/api/stores/*/customers/*/delivery-addresses**', async route => {
+    const request = route.request()
+    const url = new URL(request.url())
+    const [, storeId, customerId, id] = url.pathname.match(/^\/api\/stores\/([^/]+)\/customers\/([^/]+)\/delivery-addresses(?:\/([^/]+))?$/)
+    const method = request.method()
+    const body = method === 'POST' ? request.postDataJSON() : undefined
+    api.addressCalls.push({ storeId, customerId, id, method, body, search: url.search, headers: request.headers() })
+    const respond = (status, data) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) })
+    if (method === 'GET') return respond(200, structuredClone(api.addresses.filter(address => address.customerId === customerId)))
+    if (request.headers()['x-csrf-token'] !== 'test-csrf') return respond(403, { message: 'CSRF ausente.' })
+    if (api.addressWriteStatus !== 200) return respond(api.addressWriteStatus, { message: 'Endereco alterado em outra operacao. Recarregue.' })
+    if (method === 'DELETE') {
+      api.addresses = api.addresses.filter(address => address.id !== id)
+      return route.fulfill({ status: 204 })
+    }
+    if (!id) {
+      const { requestId, ...fields } = body
+      const address = { id: requestId, customerId, version: 0, zip: null, number: null, complement: null, neighborhood: null, city: null, state: null, ...fields }
+      api.addresses.push(address)
+      return respond(200, address)
+    }
+    const address = api.addresses.find(item => item.id === id)
+    Object.assign(address, body, { version: address.version + 1 })
+    return respond(200, address)
+  })
   await page.route('**/api/stores/*/customers**', async route => {
     const request = route.request()
     const url = new URL(request.url())
+    if (url.pathname.endsWith('/delivery-addresses') || url.pathname.includes('/delivery-addresses/')) return route.fallback()
     const [, storeId, id] = url.pathname.match(/^\/api\/stores\/([^/]+)\/customers(?:\/([^/]+))?$/)
     const method = request.method()
     const body = method === 'POST' ? request.postDataJSON() : undefined
@@ -150,4 +179,53 @@ test('erros de consulta e CPF duplicado são exibidos sem fingir lista vazia', a
   await form.getByRole('button', { name: 'Cadastrar cliente', exact: true }).click()
   await expect(form.getByRole('alert')).toContainText('Já existe um cliente com este CPF/CNPJ.')
   await expect(form.getByLabel('Nome do cliente', { exact: true })).toHaveValue('Duplicado')
+})
+
+test('endereços de entrega: lista, cadastra, edita e remove com confirmação', async ({ page }) => {
+  const api = await setupCustomers(page)
+  api.customers = [{ id: 'c1', name: 'Com Entrega', document: null, phone: null, mobile: null, city: null, version: 0 }]
+  api.addresses = [{ id: 'a1', customerId: 'c1', version: 0, zip: '83709200', street: 'RUA DAS FLORES', number: '5',
+    complement: 'Cond. SOL', neighborhood: 'CENTRO', city: 'ARAUCARIA', state: 'PR' }]
+  await openCustomers(page)
+  await page.getByRole('button', { name: 'Abrir Com Entrega', exact: true }).click()
+  const section = page.getByRole('region', { name: 'Endereços de entrega' })
+  await expect(section.getByText('RUA DAS FLORES, 5 · Cond. SOL · CENTRO · ARAUCARIA/PR · 83709-200')).toBeVisible()
+
+  const form = section.getByRole('form', { name: 'Cadastrar endereço de entrega' })
+  await form.getByLabel('Endereço', { exact: true }).fill(' Rua Nova ')
+  await form.getByLabel('UF', { exact: true }).fill('PR')
+  await form.getByRole('button', { name: 'Cadastrar endereço', exact: true }).click()
+  await expect(section.getByText('Rua Nova · PR')).toBeVisible()
+  const created = api.addressCalls.find(call => call.method === 'POST')
+  expect(created.body).toMatchObject({ street: 'Rua Nova', state: 'PR', zip: null, number: null })
+  expect(created.headers['x-csrf-token']).toBe('test-csrf')
+
+  await section.getByRole('listitem').filter({ hasText: 'RUA DAS FLORES' }).getByRole('button', { name: 'Editar', exact: true }).click()
+  const edit = section.getByRole('form', { name: 'Editar endereço RUA DAS FLORES' })
+  await edit.getByLabel('Número', { exact: true }).fill('99')
+  await edit.getByRole('button', { name: 'Salvar endereço', exact: true }).click()
+  await expect(section.getByText('RUA DAS FLORES, 99', { exact: false })).toBeVisible()
+  expect(api.addressCalls.filter(call => call.method === 'POST')[1].body.version).toBe(0)
+
+  await section.getByRole('listitem').filter({ hasText: 'Rua Nova' }).getByRole('button', { name: 'Remover', exact: true }).click()
+  expect(api.addresses).toHaveLength(2)
+  await section.getByRole('button', { name: 'Confirmar remoção', exact: true }).click()
+  await expect(section.getByText('Rua Nova')).toHaveCount(0)
+  expect(api.addressCalls.at(-2)).toMatchObject({ method: 'DELETE', id: expect.any(String) })
+  expect(api.addressCalls.find(call => call.method === 'DELETE').search).toBe('?version=0')
+})
+
+test('conflito em endereço de entrega mostra o erro e pede para recarregar', async ({ page }) => {
+  const api = await setupCustomers(page)
+  api.customers = [{ id: 'c1', name: 'Com Entrega', document: null, phone: null, mobile: null, city: null, version: 0 }]
+  api.addresses = [{ id: 'a1', customerId: 'c1', version: 0, street: 'RUA VELHA', number: null, zip: null }]
+  await openCustomers(page)
+  await page.getByRole('button', { name: 'Abrir Com Entrega', exact: true }).click()
+  const section = page.getByRole('region', { name: 'Endereços de entrega' })
+  await expect(section.getByText('RUA VELHA')).toBeVisible()
+  api.addressWriteStatus = 409
+  await section.getByRole('button', { name: 'Remover', exact: true }).click()
+  await section.getByRole('button', { name: 'Confirmar remoção', exact: true }).click()
+  await expect(section.getByRole('alert')).toContainText('Endereco alterado')
+  await expect(section.getByRole('button', { name: 'Recarregar endereços', exact: true })).toBeVisible()
 })

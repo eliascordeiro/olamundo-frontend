@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createCustomer, getCustomer, getCustomers, updateCustomer } from '../../api'
+import {
+  createCustomer, createDeliveryAddress, deleteDeliveryAddress, getCustomer, getCustomers, getDeliveryAddresses,
+  updateCustomer, updateDeliveryAddress,
+} from '../../api'
 import { sessionKey } from '../../queries'
 import useIdempotentOperation from '../../useIdempotentOperation'
 
@@ -52,5 +55,45 @@ export function useSaveCustomer(userId, storeId, id) {
       client.setQueryData(customerKey(userId, storeId, id), customer)
       await client.invalidateQueries({ queryKey: customersKey(userId) })
     },
+  })
+}
+
+const addressesKey = (userId, storeId, customerId) => ['delivery-addresses', userId, storeId, customerId]
+
+export function useDeliveryAddresses(userId, storeId, customerId) {
+  const client = useQueryClient()
+  return useQuery({
+    queryKey: addressesKey(userId, storeId, customerId),
+    queryFn: ({ signal }) => getDeliveryAddresses(storeId, customerId, { signal }),
+    enabled: () => currentUser(client, userId),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useCreateDeliveryAddress(userId, storeId, customerId) {
+  const client = useQueryClient()
+  return useIdempotentOperation({
+    userId,
+    operationKey: ['delivery-address-registration', userId, storeId, customerId],
+    mutationKey: ['create-delivery-address', userId, storeId, customerId],
+    mutationFn: address => createDeliveryAddress(storeId, customerId, address),
+    onSuccess: () => client.invalidateQueries({ queryKey: addressesKey(userId, storeId, customerId) }),
+  })
+}
+
+export function useSaveDeliveryAddress(userId, storeId, customerId) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...address }) => updateDeliveryAddress(storeId, customerId, id, address),
+    onSuccess: () => client.invalidateQueries({ queryKey: addressesKey(userId, storeId, customerId) }),
+  })
+}
+
+export function useDeleteDeliveryAddress(userId, storeId, customerId) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, version }) => deleteDeliveryAddress(storeId, customerId, id, version),
+    onSuccess: () => client.invalidateQueries({ queryKey: addressesKey(userId, storeId, customerId) }),
   })
 }
