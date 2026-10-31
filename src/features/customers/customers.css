@@ -24,3 +24,5 @@
 .delivery-addresses h3 { font-size: 16px; }
 .delivery-addresses h4 { font-size: 14px; margin: 0 0 12px; }
 .delivery-addresses .customer-form button + button { margin-left: 10px; }
+.customers-workspace > .primary-button { margin-top: 16px; }
+.customer-list li.customer-selected { background: var(--g-f7faf6); }

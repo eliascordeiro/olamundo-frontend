@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon'
+import Modal from '../../components/Modal'
 import QueryError from '../../components/QueryError'
 import { useCreateCustomer, useCustomer, useCustomers, useSaveCustomer } from './queries'
 import { formatDocument } from './format'
@@ -57,7 +58,6 @@ function NewCustomer({ userId, storeId, onCreated }) {
   }
 
   return <form className="customer-form" aria-label="Cadastrar cliente" onSubmit={submit}>
-    <h3>Novo cliente</h3>
     <p className="catalog-hint">O cliente é da empresa: todas as lojas dela enxergam este cadastro. Só CPF/CNPJ válidos são aceitos.</p>
     <fieldset disabled={creation.sending}>
       <CustomerFields values={shown} disabled={Boolean(pending)}
@@ -102,7 +102,7 @@ function CustomerEditor({ userId, storeId, customer, onSaved, onRefresh, refresh
   </form>
 }
 
-function SelectedCustomer({ userId, storeId, id, onClose }) {
+function SelectedCustomer({ userId, storeId, id }) {
   const query = useCustomer(userId, storeId, id)
   const [revision, setRevision] = useState(0)
   const [notice, setNotice] = useState('')
@@ -113,9 +113,7 @@ function SelectedCustomer({ userId, storeId, id, onClose }) {
     if (!result.isError) setRevision(previous => previous + 1)
   }
 
-  return <section className="customer-detail" aria-label="Gerenciar cliente">
-    <div className="catalog-heading"><h3>Cliente</h3>
-      <button type="button" className="secondary-button" onClick={onClose}>Fechar cliente</button></div>
+  return <section aria-label="Gerenciar cliente">
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando cliente...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o cliente" />
@@ -130,6 +128,7 @@ export default function CustomersPanel({ userId, store }) {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState('')
+  const [creating, setCreating] = useState(false)
   const [notice, setNotice] = useState('')
   const customers = useCustomers(userId, store.id, query, page)
 
@@ -144,6 +143,7 @@ export default function CustomersPanel({ userId, store }) {
     <div className="catalog-heading"><div><span className="section-eyebrow">QUEM COMPRA DA EMPRESA</span><h2>Clientes</h2>
       <p>Cadastro único da empresa, compartilhado por todas as lojas dela. Qualquer membro da loja pode consultar, cadastrar e editar.</p></div>
       <span className="team-icon"><Icon name="user" size={28} /></span></div>
+    <button type="button" className="primary-button" onClick={() => { setNotice(''); setCreating(true) }}>+ Novo cliente</button>
     {notice && <div className="alert alert-success" role="status">{notice}</div>}
     <label className="customer-search">Buscar cliente
       <input type="search" maxLength={100} value={search} placeholder="Nome, CPF/CNPJ ou telefone"
@@ -155,7 +155,7 @@ export default function CustomersPanel({ userId, store }) {
           {customers.data.content.length === 0
             ? <p className="empty-state">{query ? 'Nenhum cliente encontrado para esta busca.' : 'Nenhum cliente nesta página.'}</p>
             : <ul className="customer-list" aria-label="Clientes">{customers.data.content.map(customer =>
-              <li key={customer.id}>
+              <li key={customer.id} className={selectedId === customer.id ? 'customer-selected' : undefined}>
                 <div className="customer-person"><h3>{customer.name}</h3>
                   <p>{[formatDocument(customer.document), customer.mobile || customer.phone, customer.city].filter(Boolean).join(' · ') || 'Sem documento ou contato'}</p></div>
                 <button type="button" className="secondary-button" aria-label={`Abrir ${customer.name}`}
@@ -169,11 +169,13 @@ export default function CustomersPanel({ userId, store }) {
               onClick={() => { setSelectedId(''); setPage(page + 1) }}>Próxima página</button>
           </nav>
         </>}
-    {selectedId && <SelectedCustomer key={selectedId} userId={userId} storeId={store.id} id={selectedId}
-      onClose={() => setSelectedId('')} />}
-    <NewCustomer userId={userId} storeId={store.id} onCreated={(customer) => {
-      setNotice(`Cliente ${customer.name} cadastrado.`)
-      setSelectedId(customer.id)
-    }} />
+    {selectedId && <Modal title="Cliente" onClose={() => setSelectedId('')}>
+      <SelectedCustomer key={selectedId} userId={userId} storeId={store.id} id={selectedId} /></Modal>}
+    {creating && <Modal title="Novo cliente" onClose={() => setCreating(false)}>
+      <NewCustomer userId={userId} storeId={store.id} onCreated={(customer) => {
+        setNotice(`Cliente ${customer.name} cadastrado.`)
+        setCreating(false)
+        setSelectedId(customer.id)
+      }} /></Modal>}
   </section>
 }
