@@ -20,6 +20,7 @@ async function selectStore(page, id) {
 }
 
 async function fillProduct(page, { sku = 'NOVO-1', price = '19,90' } = {}) {
+  await page.getByRole('button', { name: 'Novo produto', exact: false }).click()
   await page.getByLabel('Nome do produto', { exact: true }).fill('Novo produto teste')
   await page.getByLabel('SKU', { exact: true }).fill(sku)
   await page.getByLabel('Preço (R$)', { exact: true }).fill(price)
@@ -33,11 +34,11 @@ test('seletor isola catalogos e o papel por loja sem mural de teste', async ({ p
   await expect(page.getByRole('heading', { name: 'Mural de conexões' })).toHaveCount(0)
   await selectStore(page, storeA.id)
   await expect(page.getByRole('heading', { name: 'Produto Norte', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Cadastrar produto', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Novo produto', exact: false })).toBeVisible()
   await selectStore(page, storeB.id)
   await expect(page.getByRole('heading', { name: 'Produto Sul', exact: true })).toBeVisible()
   await expect(page.getByText('Produto Norte', { exact: true })).toBeHidden()
-  await expect(page.getByRole('button', { name: 'Cadastrar produto', exact: true })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Novo produto', exact: false })).toBeHidden()
   await expect(page.getByText('Seu acesso permite consultar produtos.', { exact: false })).toBeVisible()
   await page.reload()
   await expect(page.getByLabel('Loja ativa')).toHaveValue('')
@@ -62,7 +63,7 @@ test('cadastro preserva preco decimal e CSRF e invalida somente o catalogo da lo
   expect(writes[0].body).toMatchObject({ sku: 'NOVO-1', price: '0.10' })
   expect(writes[0].headers['x-csrf-token']).toBe('test-csrf')
   expect(api.calls.filter((call) => call.path === `/api/stores/${storeB.id}/products`).length).toBe(southReads)
-  await expect(page.getByLabel('Nome do produto', { exact: true })).toHaveValue('')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.reload()
   await selectStore(page, storeA.id)
   await expect(page.getByRole('heading', { name: 'Novo produto teste', exact: true })).toBeVisible()
@@ -120,10 +121,11 @@ test('permissao alterada no servidor bloqueia cadastro sem perder o rascunho', a
   await expect(page.getByLabel('SKU', { exact: true })).toHaveValue('NOVO-1')
   expect(api.calls.filter((call) => call.path.endsWith('/products') && call.method === 'POST')).toHaveLength(1)
   expect(api.products[storeA.id]).toHaveLength(1)
+  await page.keyboard.press('Escape')
   await selectStore(page, storeB.id)
   await expect(page.getByRole('heading', { name: 'Produto Sul', exact: true })).toBeVisible()
   await selectStore(page, storeA.id)
-  await expect(page.getByRole('button', { name: 'Cadastrar produto', exact: true })).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Novo produto', exact: false })).toBeHidden()
   await expect(page.getByText('Seu acesso permite consultar produtos.', { exact: false })).toBeVisible()
 })
 
@@ -189,7 +191,7 @@ test('layout movel e estado sem lojas continuam utilizaveis', async ({ page }) =
   api.stores = [{ ...storeA }]
   await page.getByRole('button', { name: 'Atualizar lojas', exact: true }).click()
   await selectStore(page, storeA.id)
-  await expect(page.getByRole('button', { name: 'Cadastrar produto', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Novo produto', exact: false })).toBeVisible()
   await expect(page.getByText('Nenhum produto nesta página.', { exact: true })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

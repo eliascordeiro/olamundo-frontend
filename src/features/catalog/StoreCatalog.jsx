@@ -17,11 +17,10 @@ const roleNames = { OWNER: 'Proprietário', MANAGER: 'Gerente', STAFF: 'Colabora
 const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 const emptyProduct = { name: '', sku: '', description: '', price: '' }
 
-function ProductForm({ userId, storeId }) {
+function ProductForm({ userId, storeId, onCreated }) {
   const mutation = useCreateProduct(userId, storeId)
   const [values, setValues] = useState(emptyProduct)
   const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
 
   function field(name) {
     return {
@@ -33,7 +32,6 @@ function ProductForm({ userId, storeId }) {
   async function submit(event) {
     event.preventDefault()
     setError('')
-    setNotice('')
     const price = values.price.trim().replace(',', '.')
     if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(price)) {
       setError('Informe um preço de 0 a 9.999.999.999,99, sem separador de milhar e com até duas casas decimais.')
@@ -48,14 +46,13 @@ function ProductForm({ userId, storeId }) {
         price,
       })
       setValues(emptyProduct)
-      setNotice('Produto cadastrado com sucesso.')
+      onCreated()
     } catch (err) {
       setError(err.message)
     }
   }
 
   return <form id="product-create" className="product-form" onSubmit={submit} aria-label="Cadastrar produto">
-    <h3>Novo produto</h3>
     <fieldset disabled={mutation.isPending}>
       <div className="product-fields">
         <label>Nome do produto<input required minLength={2} maxLength={120} {...field('name')} /></label>
@@ -68,7 +65,6 @@ function ProductForm({ userId, storeId }) {
       <p id="price-help" className="catalog-hint">Valores em reais, com até duas casas decimais. Estoque é movimentado separadamente; sem cobrança.</p>
       <label>Descrição<textarea maxLength={2000} rows={3} {...field('description')} /></label>
       {error && <div className="alert alert-error" role="alert">{error}</div>}
-      {notice && <div className="alert alert-success" role="status">{notice}</div>}
       <button className="primary-button" type="submit">
         {mutation.isPending ? 'Cadastrando produto...' : 'Cadastrar produto'}
       </button>
@@ -79,6 +75,8 @@ function ProductForm({ userId, storeId }) {
 function ProductCatalog({ userId, store, section, onSectionChange }) {
   const [page, setPage] = useState(0)
   const [stockProduct, setStockProduct] = useState(null)
+  const [creatingProduct, setCreatingProduct] = useState(false)
+  const [productNotice, setProductNotice] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState('')
   const [orderError, setOrderError] = useState('')
   const [search, setSearch] = useState('')
@@ -151,7 +149,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
     <div className="catalog-heading">
       <div><span className="section-eyebrow">PRODUTOS E PREÇOS</span><h2>Catálogo</h2>
         <p>Confira o produto do atendimento e organize seu pedido.</p></div>
-      {canCreate && <a className="secondary-button" href="#product-create">Novo produto <Icon name="arrow" size={16} /></a>}
+      {canCreate && <button type="button" className="secondary-button" onClick={() => { setProductNotice(''); setCreatingProduct(true) }}>Novo produto <Icon name="arrow" size={16} /></button>}
     </div>
     {!canCreate && <p className="catalog-hint">Seu acesso permite consultar produtos. O cadastro é feito por proprietários e gerentes.</p>}
     {productList(`Produtos do catálogo de ${store.name}`, (product) =>
@@ -162,9 +160,14 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
           aria-label={`Adicionar ${product.name} ao pedido`}
           disabled={creation.sending || Boolean(creation.pendingOperation)}
           onClick={() => addToOrder(product)}>Adicionar ao pedido</button>}</div>)}
+    {productNotice && <div className="alert alert-success" role="status">{productNotice}</div>}
     {orderError && <div className="alert alert-error" role="alert">{orderError}</div>}
     {products.data && pagination('catálogo')}
-    {canCreate && <ProductForm userId={userId} storeId={store.id} />}
+    {creatingProduct && <Modal title="Novo produto" onClose={() => setCreatingProduct(false)}>
+      <ProductForm userId={userId} storeId={store.id} onCreated={() => {
+        setCreatingProduct(false)
+        setProductNotice('Produto cadastrado com sucesso.')
+      }} /></Modal>}
   </section>
 
   if (section === 'inventory') return <section className="inventory-workspace" aria-label={`Estoque de ${store.name}`}>
