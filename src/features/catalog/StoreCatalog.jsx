@@ -3,6 +3,8 @@ import { useCreateProduct, useCreateStore, useProducts, useStore, useStores } fr
 import StockPanel from '../inventory/StockPanel'
 import QueryError from '../../components/QueryError'
 import Modal from '../../components/Modal'
+import { useUnsavedGuard } from '../../components/modalGuard'
+import { useToast } from '../../components/toastContext'
 import OrdersPanel from '../orders/OrdersPanel'
 import { useCreateOrder, useOrderDraft } from '../orders/queries'
 import Icon from '../../components/Icon'
@@ -21,6 +23,7 @@ function ProductForm({ userId, storeId, onCreated }) {
   const mutation = useCreateProduct(userId, storeId)
   const [values, setValues] = useState(emptyProduct)
   const [error, setError] = useState('')
+  useUnsavedGuard(JSON.stringify(values) !== JSON.stringify(emptyProduct))
 
   function field(name) {
     return {
@@ -76,7 +79,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
   const [page, setPage] = useState(0)
   const [stockProduct, setStockProduct] = useState(null)
   const [creatingProduct, setCreatingProduct] = useState(false)
-  const [productNotice, setProductNotice] = useState('')
+  const notify = useToast()
   const [selectedOrderId, setSelectedOrderId] = useState('')
   const [orderError, setOrderError] = useState('')
   const [search, setSearch] = useState('')
@@ -149,7 +152,7 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
     <div className="catalog-heading">
       <div><span className="section-eyebrow">PRODUTOS E PREÇOS</span><h2>Catálogo</h2>
         <p>Confira o produto do atendimento e organize seu pedido.</p></div>
-      {canCreate && <button type="button" className="secondary-button" onClick={() => { setProductNotice(''); setCreatingProduct(true) }}>Novo produto <Icon name="arrow" size={16} /></button>}
+      {canCreate && <button type="button" className="secondary-button" onClick={() => setCreatingProduct(true)}>Novo produto <Icon name="arrow" size={16} /></button>}
     </div>
     {!canCreate && <p className="catalog-hint">Seu acesso permite consultar produtos. O cadastro é feito por proprietários e gerentes.</p>}
     {productList(`Produtos do catálogo de ${store.name}`, (product) =>
@@ -160,13 +163,12 @@ function ProductCatalog({ userId, store, section, onSectionChange }) {
           aria-label={`Adicionar ${product.name} ao pedido`}
           disabled={creation.sending || Boolean(creation.pendingOperation)}
           onClick={() => addToOrder(product)}>Adicionar ao pedido</button>}</div>)}
-    {productNotice && <div className="alert alert-success" role="status">{productNotice}</div>}
     {orderError && <div className="alert alert-error" role="alert">{orderError}</div>}
     {products.data && pagination('catálogo')}
     {creatingProduct && <Modal title="Novo produto" onClose={() => setCreatingProduct(false)}>
       <ProductForm userId={userId} storeId={store.id} onCreated={() => {
         setCreatingProduct(false)
-        setProductNotice('Produto cadastrado com sucesso.')
+        notify('Produto cadastrado com sucesso.')
       }} /></Modal>}
   </section>
 

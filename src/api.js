@@ -1,5 +1,12 @@
 const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL || '').replace(/\/$/, '')
 
+const STATUS_MESSAGES = {
+  401: 'Sua sessão expirou. Entre novamente para continuar.',
+  403: 'Você não tem permissão para esta ação. Se o problema persistir, atualize a página e entre novamente.',
+  404: 'Não encontramos este registro. Ele pode ter sido removido; atualize a lista.',
+  429: 'Muitas tentativas em pouco tempo. Aguarde um instante e tente de novo.',
+}
+
 export class ApiError extends Error {
   constructor(message, status) {
     super(message)
@@ -29,7 +36,10 @@ async function request(path, options = {}) {
     )
   }
   if (!response.ok) {
-    let message = `Não foi possível concluir a solicitação (${response.status}).`
+    let message = STATUS_MESSAGES[response.status]
+      ?? (response.status >= 500
+        ? 'O servidor teve um problema ao processar o pedido. Tente novamente em instantes.'
+        : `Não foi possível concluir a solicitação (${response.status}).`)
     if (response.headers.get('content-type')?.includes('application/json')) {
       const body = await response.json()
       if (typeof body.message === 'string') message = body.message

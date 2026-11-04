@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon'
 import Modal from '../../components/Modal'
+import { useUnsavedGuard } from '../../components/modalGuard'
+import { useToast } from '../../components/toastContext'
 import QueryError from '../../components/QueryError'
 import { useCreateGroup, useCreateSubgroup, useProductGroups, useSaveGroup, useSaveSubgroup } from './queries'
 import '../customers/customers.css'
@@ -46,6 +48,7 @@ function DataForm({ ariaLabel, definition, source, submitLabel, busy, pendingOpe
   const [values, setValues] = useState(() => toValues(definition, source))
   const [error, setError] = useState('')
   const shown = pendingOperation ? toValues(definition, pendingOperation) : values
+  useUnsavedGuard(JSON.stringify(values) !== JSON.stringify(toValues(definition, source)))
 
   async function submit(event) {
     event.preventDefault()
@@ -112,8 +115,8 @@ export default function GroupsPanel({ userId, store }) {
   const canWrite = store.role === 'OWNER' || store.role === 'MANAGER'
   const groups = useProductGroups(userId, store.id)
   const [form, setForm] = useState(null)
-  const [notice, setNotice] = useState('')
-  const finish = (message) => () => { setNotice(message); setForm(null) }
+  const notify = useToast()
+  const finish = (message) => () => { notify(message); setForm(null) }
   const common = { userId, storeId: store.id, onCancel: () => setForm(null) }
 
   return <section className="customers-workspace" aria-label={`Grupos de produtos de ${store.name}`}>
@@ -121,8 +124,7 @@ export default function GroupsPanel({ userId, store }) {
       <p>Grupos e subgrupos da empresa, compartilhados por todas as lojas dela. Todos consultam; proprietário e gerente cadastram e editam.
         Comissões e descontos ficam guardados para as vendas, que ainda não os utilizam.</p></div>
       <span className="team-icon"><Icon name="tag" size={28} /></span></div>
-    {canWrite && <button type="button" className="primary-button" onClick={() => { setNotice(''); setForm({ kind: 'newGroup' }) }}>Novo grupo</button>}
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
+    {canWrite && <button type="button" className="primary-button" onClick={() => setForm({ kind: 'newGroup' })}>Novo grupo</button>}
     {groups.isPending ? <p role="status">Carregando grupos...</p>
       : groups.isError ? <QueryError query={groups} label="Não foi possível carregar os grupos" />
         : groups.data.length === 0 ? <p className="empty-state">Nenhum grupo cadastrado.</p>

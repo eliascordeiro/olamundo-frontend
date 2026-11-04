@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon'
 import Modal from '../../components/Modal'
+import { useUnsavedGuard } from '../../components/modalGuard'
+import { useToast } from '../../components/toastContext'
 import QueryError from '../../components/QueryError'
 import { useCreateCustomer, useCustomer, useCustomers, useSaveCustomer } from './queries'
 import { formatDocument } from './format'
@@ -44,6 +46,7 @@ function NewCustomer({ userId, storeId, onCreated }) {
   const [error, setError] = useState('')
   const pending = creation.pendingOperation
   const shown = pending ? toValues(pending) : values
+  useUnsavedGuard(JSON.stringify(values) !== JSON.stringify(emptyCustomer))
 
   async function submit(event) {
     event.preventDefault()
@@ -76,6 +79,7 @@ function CustomerEditor({ userId, storeId, customer, onSaved, onRefresh, refresh
   const [error, setError] = useState('')
   const [blocked, setBlocked] = useState(false)
   const disabled = mutation.isPending || refreshing
+  useUnsavedGuard(JSON.stringify(values) !== JSON.stringify(toValues(customer)))
 
   async function submit(event) {
     event.preventDefault()
@@ -105,20 +109,18 @@ function CustomerEditor({ userId, storeId, customer, onSaved, onRefresh, refresh
 function SelectedCustomer({ userId, storeId, id }) {
   const query = useCustomer(userId, storeId, id)
   const [revision, setRevision] = useState(0)
-  const [notice, setNotice] = useState('')
+  const notify = useToast()
 
   async function refresh() {
-    setNotice('')
     const result = await query.refetch()
     if (!result.isError) setRevision(previous => previous + 1)
   }
 
   return <section aria-label="Gerenciar cliente">
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando cliente...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o cliente" />
         : <CustomerEditor key={`${id}:${revision}`} userId={userId} storeId={storeId} customer={query.data}
-          onSaved={setNotice} onRefresh={refresh} refreshing={query.isFetching} />}
+          onSaved={notify} onRefresh={refresh} refreshing={query.isFetching} />}
     {query.data && <DeliveryAddresses userId={userId} storeId={storeId} customerId={id} />}
   </section>
 }
@@ -129,7 +131,7 @@ export default function CustomersPanel({ userId, store }) {
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState('')
   const [creating, setCreating] = useState(false)
-  const [notice, setNotice] = useState('')
+  const notify = useToast()
   const customers = useCustomers(userId, store.id, query, page)
 
   useEffect(() => {
@@ -143,8 +145,7 @@ export default function CustomersPanel({ userId, store }) {
     <div className="catalog-heading"><div><span className="section-eyebrow">QUEM COMPRA DA EMPRESA</span><h2>Clientes</h2>
       <p>Cadastro único da empresa, compartilhado por todas as lojas dela. Qualquer membro da loja pode consultar, cadastrar e editar.</p></div>
       <span className="team-icon"><Icon name="user" size={28} /></span></div>
-    <button type="button" className="primary-button" onClick={() => { setNotice(''); setCreating(true) }}>+ Novo cliente</button>
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
+    <button type="button" className="primary-button" onClick={() => setCreating(true)}>+ Novo cliente</button>
     <label className="customer-search">Buscar cliente
       <input type="search" maxLength={100} value={search} placeholder="Nome, CPF/CNPJ ou telefone"
         onChange={event => setSearch(event.target.value)} /></label>
@@ -173,7 +174,7 @@ export default function CustomersPanel({ userId, store }) {
       <SelectedCustomer key={selectedId} userId={userId} storeId={store.id} id={selectedId} /></Modal>}
     {creating && <Modal title="Novo cliente" onClose={() => setCreating(false)}>
       <NewCustomer userId={userId} storeId={store.id} onCreated={(customer) => {
-        setNotice(`Cliente ${customer.name} cadastrado.`)
+        notify(`Cliente ${customer.name} cadastrado.`)
         setCreating(false)
         setSelectedId(customer.id)
       }} /></Modal>}

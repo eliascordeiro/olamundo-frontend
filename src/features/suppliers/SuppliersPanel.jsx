@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon'
 import Modal from '../../components/Modal'
+import { useUnsavedGuard } from '../../components/modalGuard'
+import { useToast } from '../../components/toastContext'
 import QueryError from '../../components/QueryError'
 import { formatDocument } from '../customers/format'
 import { useCreateSupplier, useSaveSupplier, useSupplier, useSuppliers } from './queries'
@@ -38,6 +40,7 @@ function NewSupplier({ userId, storeId, onCreated }) {
   const [values, setValues] = useState(emptySupplier)
   const [error, setError] = useState('')
   const pending = creation.pendingOperation
+  useUnsavedGuard(JSON.stringify(values) !== JSON.stringify(emptySupplier))
 
   async function submit(event) {
     event.preventDefault()
@@ -71,6 +74,7 @@ function SupplierEditor({ userId, storeId, supplier, canWrite, onSaved, onRefres
   const [error, setError] = useState('')
   const [blocked, setBlocked] = useState(false)
   const disabled = mutation.isPending || refreshing || !canWrite
+  useUnsavedGuard(JSON.stringify(values) !== JSON.stringify(toValues(supplier)) || active !== supplier.active)
 
   async function submit(event) {
     event.preventDefault()
@@ -103,20 +107,18 @@ function SupplierEditor({ userId, storeId, supplier, canWrite, onSaved, onRefres
 function SelectedSupplier({ userId, store, canWrite, id }) {
   const query = useSupplier(userId, store.id, id)
   const [revision, setRevision] = useState(0)
-  const [notice, setNotice] = useState('')
+  const notify = useToast()
 
   async function refresh() {
-    setNotice('')
     const result = await query.refetch()
     if (!result.isError) setRevision(previous => previous + 1)
   }
 
   return <section aria-label="Gerenciar fornecedor">
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando fornecedor...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o fornecedor" />
         : <SupplierEditor key={`${id}:${revision}`} userId={userId} storeId={store.id} supplier={query.data}
-          canWrite={canWrite} onSaved={setNotice} onRefresh={refresh} refreshing={query.isFetching} />}
+          canWrite={canWrite} onSaved={notify} onRefresh={refresh} refreshing={query.isFetching} />}
   </section>
 }
 
@@ -127,7 +129,7 @@ export default function SuppliersPanel({ userId, store }) {
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState('')
   const [creating, setCreating] = useState(false)
-  const [notice, setNotice] = useState('')
+  const notify = useToast()
   const suppliers = useSuppliers(userId, store.id, query, page)
 
   useEffect(() => {
@@ -141,8 +143,7 @@ export default function SuppliersPanel({ userId, store }) {
     <div className="catalog-heading"><div><span className="section-eyebrow">DE QUEM A EMPRESA COMPRA</span><h2>Fornecedores</h2>
       <p>Cadastro único da empresa, compartilhado por todas as lojas dela. Todos consultam; proprietário e gerente cadastram e editam.</p></div>
       <span className="team-icon"><Icon name="truck" size={28} /></span></div>
-    {canWrite && <button type="button" className="primary-button" onClick={() => { setNotice(''); setCreating(true) }}>+ Novo fornecedor</button>}
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
+    {canWrite && <button type="button" className="primary-button" onClick={() => setCreating(true)}>+ Novo fornecedor</button>}
     <label className="customer-search">Buscar fornecedor
       <input type="search" maxLength={100} value={search} placeholder="Nome, CNPJ/CPF ou telefone"
         onChange={event => setSearch(event.target.value)} /></label>
@@ -171,7 +172,7 @@ export default function SuppliersPanel({ userId, store }) {
       <SelectedSupplier key={selectedId} userId={userId} store={store} canWrite={canWrite} id={selectedId} /></Modal>}
     {creating && <Modal title="Novo fornecedor" onClose={() => setCreating(false)}>
       <NewSupplier userId={userId} storeId={store.id} onCreated={(supplier) => {
-        setNotice(`Fornecedor ${supplier.name} cadastrado.`)
+        notify(`Fornecedor ${supplier.name} cadastrado.`)
         setCreating(false)
         setSelectedId(supplier.id)
       }} /></Modal>}

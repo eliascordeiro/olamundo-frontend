@@ -21,6 +21,7 @@ test('cadastro com resposta perdida conserva envio entre seções e não duplica
   await page.getByRole('button', { name: 'Cadastrar vendedor', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível conectar')
   await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Descartar e fechar', exact: true }).click()
   await page.getByRole('button', { name: 'Visão geral', exact: true }).click()
   await page.getByRole('button', { name: 'Equipe e vendedores', exact: true }).click()
   await page.getByRole('button', { name: '+ Novo vendedor', exact: true }).click()

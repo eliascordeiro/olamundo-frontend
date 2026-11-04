@@ -6,6 +6,7 @@ import './index.css'
 import './themes.css'
 import { applyTheme, readTheme } from './theme'
 import App from './App.jsx'
+import { ToastProvider } from './components/Toast'
 
 applyTheme(readTheme())
 
@@ -14,7 +15,7 @@ const queryClient = createQueryClient()
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ToastProvider><App /></ToastProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

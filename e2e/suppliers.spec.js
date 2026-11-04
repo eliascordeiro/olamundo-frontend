@@ -126,6 +126,7 @@ test('cadastro com resposta perdida conserva o envio e não duplica', async ({ p
   await form.getByRole('button', { name: 'Cadastrar fornecedor', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('Não foi possível conectar')
   await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Descartar e fechar', exact: true }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await page.getByRole('button', { name: 'Visão geral', exact: true }).click()
   await page.getByRole('button', { name: 'Fornecedores', exact: true }).click()

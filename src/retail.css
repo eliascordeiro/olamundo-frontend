@@ -213,3 +213,10 @@
 .modal-body .customer-form { margin-top: 0; }
 body:has(dialog[open]) { overflow: hidden; }
 @media (max-width: 650px) { .modal { width: 100vw; max-width: 100vw; height: 100svh; max-height: 100svh; border-radius: 0; } .modal-body { padding: 14px; } }
+
+.toast-region { inset: auto 0 24px 0; margin: 0 auto; width: min(460px, calc(100vw - 32px)); padding: 0; border: 0; background: transparent; overflow: visible; pointer-events: none; display: none; flex-direction: column; gap: 8px; }
+.toast-region:popover-open { display: flex; }
+.toast { pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 10px; font-size: 13px; color: var(--t-28563a); background: var(--g-eff8eb); border: 1px solid var(--b-cfe2c8); box-shadow: 0 10px 30px #00000033; }
+.toast-close { padding: 0 6px; font-size: 20px; line-height: 1; color: inherit; background: transparent; }
+.modal-confirm { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 22px; font-size: 13px; background: var(--g-fff1ef); color: var(--t-9b3535); border-bottom: 1px solid var(--b-f1d1cb); }
+.modal-confirm-actions { display: flex; gap: 10px; flex-wrap: wrap; }

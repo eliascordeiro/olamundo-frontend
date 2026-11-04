@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Icon from '../../components/Icon'
 import Modal from '../../components/Modal'
+import { useUnsavedGuard } from '../../components/modalGuard'
+import { useToast } from '../../components/toastContext'
 import QueryError from '../../components/QueryError'
 import { useCreateSalesperson, useGrantSellerAccess, useSalespeople, useSalesperson, useSaveSalesperson } from './queries'
 import { useStores } from '../catalog/queries'
@@ -11,6 +13,7 @@ function NewSalesperson({ userId, storeId, onCreated }) {
   const creation = useCreateSalesperson(userId, storeId)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
+  useUnsavedGuard(name.trim() !== '')
 
   async function submit(event) {
     event.preventDefault()
@@ -171,20 +174,18 @@ function SelectedSalesperson({ userId, store, id }) {
   const storeId = store.id
   const query = useSalesperson(userId, storeId, id)
   const [revision, setRevision] = useState(0)
-  const [notice, setNotice] = useState('')
+  const notify = useToast()
 
   async function refresh() {
-    setNotice('')
     const result = await query.refetch()
     if (!result.isError) setRevision(previous => previous + 1)
   }
 
   return <section aria-label="Gerenciar vendedor">
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
     {query.isPending ? <p role="status">Carregando cadastro...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível consultar o vendedor" />
         : <SalespersonEditor key={`${id}:${revision}`} userId={userId} store={store}
-          seller={query.data} onSaved={setNotice} onRefresh={refresh} refreshing={query.isFetching} />}
+          seller={query.data} onSaved={notify} onRefresh={refresh} refreshing={query.isFetching} />}
   </section>
 }
 
@@ -192,7 +193,7 @@ function OwnerTeam({ userId, store }) {
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState('')
   const [creating, setCreating] = useState(false)
-  const [notice, setNotice] = useState('')
+  const notify = useToast()
   const query = useSalespeople(userId, store.id, page)
 
   function changePage(next) {
@@ -204,8 +205,7 @@ function OwnerTeam({ userId, store }) {
     <div className="team-section-heading"><h3>Vendedores da loja</h3>
       <button type="button" className="secondary-button" disabled={query.isFetching}
         onClick={() => query.refetch()}>Atualizar vendedores</button></div>
-    <button type="button" className="primary-button" onClick={() => { setNotice(''); setCreating(true) }}>+ Novo vendedor</button>
-    {notice && <div className="alert alert-success" role="status">{notice}</div>}
+    <button type="button" className="primary-button" onClick={() => setCreating(true)}>+ Novo vendedor</button>
     {query.isPending ? <p role="status">Carregando vendedores...</p>
       : query.isError ? <QueryError query={query} label="Não foi possível carregar os vendedores" />
         : <>
@@ -231,7 +231,7 @@ function OwnerTeam({ userId, store }) {
       <SelectedSalesperson key={selectedId} userId={userId} store={store} id={selectedId} /></Modal>}
     {creating && <Modal title="Novo vendedor" onClose={() => setCreating(false)}>
       <NewSalesperson userId={userId} storeId={store.id} onCreated={(seller) => {
-        setNotice('Vendedor cadastrado. Nenhuma conta ou permissão foi criada.')
+        notify('Vendedor cadastrado. Nenhuma conta ou permissão foi criada.')
         setCreating(false)
         setSelectedId(seller.id)
       }} /></Modal>}

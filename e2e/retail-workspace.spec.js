@@ -110,6 +110,7 @@ test('varejo funciona de 320px ao desktop sem overflow nem ações cobertas pelo
     await expect(page.getByLabel('Nome do produto', { exact: true })).toBeFocused()
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'Descartar e fechar', exact: true }).click()
     await page.getByRole('button', { name: 'Visão geral', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Visão geral', exact: true })).toBeVisible()
     await expect.poll(() => page.evaluate(() => scrollY)).toBe(0)
