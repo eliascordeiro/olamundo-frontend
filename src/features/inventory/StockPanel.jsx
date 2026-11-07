@@ -84,7 +84,7 @@ export default function StockPanel({ userId, store, product }) {
       <h4 id={historyTitleId}>Histórico de movimentações</h4>
       {history.isPending ? <p role="status">Carregando histórico...</p>
         : history.isError ? <QueryError query={history} label="Não foi possível consultar o histórico" />
-          : history.data.content.length === 0 ? <p>Nenhuma movimentação nesta página.</p>
+          : history.data.content.length === 0 ? <p className="empty-state">Nenhuma movimentação nesta página.</p>
             : <ol className="stock-history">{history.data.content.map((movement) =>
               <li key={movement.id}>
                 <strong>{movement.type === 'IN' ? 'Entrada' : 'Saída'}: {movement.quantity} unidades</strong>

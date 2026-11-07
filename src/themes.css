@@ -347,6 +347,90 @@
 
 :root[data-theme="dark"] { color-scheme: dark; }
 
+/* Elevação no tema escuro: página < cartão < área interna < hover, sempre no mesmo matiz. */
+:root[data-theme="dark"] {
+  --g-f8faf9: #0d1210;
+  --g-f5f6f3: #0d1210;
+  --g-ffffff: #151b18;
+  --g-ffffffc9: #151b18d9;
+  --g-f7faf6: #1b2420;
+  --g-f7f9f3: #1b2420;
+  --g-f8faf5: #1b2420;
+  --g-fbfcf9: #1b2420;
+  --g-fcfdf9: #1b2420;
+  --g-fcfdfc: #1b2420;
+  --g-f5f7f1: #1b2420;
+  --g-f4f7ed: #1b2420;
+  --g-f2f4ec: #1b2420;
+  --g-f0f3e8: #1b2420;
+  --g-f0f5ec: #1b2420;
+  --g-eef4e6: #1b2420;
+  --g-edf2e6: #1b2420;
+  --g-edf3ee: #1b2420;
+  --g-edf4ee: #1b2420;
+  --g-e8eee1: #1b2420;
+  --g-e7ece7: #1b2420;
+  --g-f1f7f2: #1b2420;
+  --g-eaf0e3: #25312b;
+  --g-e7f2e9: #15291f;
+  --b-cfe2c8: #2d5744;
+  --b-dfe7df: #2b3731;
+  --b-dfe8df: #2b3731;
+  --b-dfe9df: #2b3731;
+  --b-e1e6dc: #2b3731;
+  --b-e1e9e2: #2b3731;
+  --b-e3e7df: #2b3731;
+  --b-e2e8d9: #2b3731;
+  --b-e4e9d8: #2b3731;
+  --b-e5e9dd: #2b3731;
+  --b-e6e9df: #2b3731;
+  --b-e9ecdf: #2b3731;
+  --b-e9eddf: #2b3731;
+  --b-dfe6d9: #34423b;
+  --b-dce3d3: #34423b;
+  --b-d4dfcb: #34423b;
+  --b-dce5ca: #34423b;
+  --b-dce3dd: #44544c;
+  --b-a8b99a: #5c7066;
+  --t-64766a: #a3b1a8;
+  --t-66786b: #a3b1a8;
+  --t-68796b: #a3b1a8;
+  --t-6a7c70: #a3b1a8;
+  --t-6d7c72: #a3b1a8;
+  --t-6a8171: #a3b1a8;
+  --t-70816a: #a3b1a8;
+  --t-71806a: #a3b1a8;
+  --t-718068: #a3b1a8;
+  --t-74806e: #a3b1a8;
+  --t-748276: #a3b1a8;
+  --t-75816d: #a3b1a8;
+  --t-778571: #a3b1a8;
+  --t-64765d: #a3b1a8;
+  --t-66765a: #a3b1a8;
+  --t-68785b: #a3b1a8;
+  --t-7b8581: #96a49b;
+  --t-849287: #96a49b;
+  --t-8c9a90: #96a49b;
+  --t-909b92: #96a49b;
+  --t-91a096: #96a49b;
+  --t-9aa59c: #96a49b;
+  --t-9aa59e: #96a49b;
+}
+
+:root[data-theme="dark"] :is(input, select, textarea):not([type="checkbox"], [type="radio"]) {
+  background-color: #0f1512;
+  border-color: var(--b-dce3dd);
+}
+:root[data-theme="dark"] :is(input, select, textarea):not([type="checkbox"], [type="radio"]):focus {
+  border-color: #7fcfba;
+}
+:root[data-theme="dark"] .secondary-button:disabled {
+  opacity: 1;
+  color: #8a988f;
+  background: #171e1b;
+  border-color: #34423b;
+}
+
 :root[data-theme="dark"] :is(.workspace-sidebar, .business-panel) {
   --b-103e34: #103e34;
   --b-25614d: #25614d;
