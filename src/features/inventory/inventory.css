@@ -1,6 +1,9 @@
-.stock-panel { margin: 24px 0; padding: 20px; border: 1px solid var(--b-dfe7df); border-radius: 12px; }
-.stock-panel h4 { margin: 18px 0 12px; }
-.stock-balance { margin: 16px 0; }
+.stock-panel { display: grid; gap: 16px; min-width: 0; }
+.stock-panel > .catalog-hint { margin: 0; }
+.stock-panel h4 { margin: 0 0 14px; color: var(--t-103e34); font-size: 15px; }
+.stock-balance { display: grid; gap: 6px; margin: 0; padding: 18px 20px; border: 1px solid var(--b-cfe2c8); border-radius: 12px; background: var(--g-e7f2e9); color: var(--t-235b39); font-size: 13px; font-weight: 600; }
+.stock-balance strong { color: var(--t-103e34); font-size: 24px; line-height: 1.2; overflow-wrap: anywhere; }
+.stock-form, .stock-history-section { min-width: 0; padding: 20px; border: 1px solid var(--b-dfe7df); border-radius: 12px; background: var(--g-ffffff); }
 .stock-form fieldset { display: grid; gap: 12px; border: 0; padding: 0; min-width: 0; }
 .stock-form label { display: block; font-size: 12px; font-weight: 600; }
 .stock-form input, .stock-form select, .stock-form textarea { display: block; margin-top: 6px; width: 100%; min-width: 0; padding: 10px; border: 1px solid var(--b-dce3dd); border-radius: 8px; font: inherit; background: var(--g-ffffff); color: var(--t-203d31); }
@@ -12,6 +15,7 @@
 .stock-history p { white-space: pre-wrap; }
 .product-actions { display: grid; gap: 12px; justify-items: end; flex-shrink: 0; }
 @media (max-width: 650px) {
-  .stock-panel { padding: 14px; }
+  .stock-form, .stock-history-section, .stock-balance { padding: 16px; }
+  .stock-form input, .stock-form select, .stock-form textarea { font-size: 16px; }
   .product-actions { justify-items: start; }
 }

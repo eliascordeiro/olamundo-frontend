@@ -65,6 +65,7 @@ function MovementForm({ userId, storeId, productId }) {
 }
 
 export default function StockPanel({ userId, store, product }) {
+  const historyTitleId = useId()
   const [page, setPage] = useState(0)
   const balance = useStock(userId, store.id, product.id)
   const history = useStockHistory(userId, store.id, product.id, page)
@@ -79,24 +80,26 @@ export default function StockPanel({ userId, store, product }) {
           {canWrite ? <MovementForm userId={userId} storeId={store.id} productId={product.id} />
             : <p className="catalog-hint">Seu acesso permite somente consultar estoque e histórico.</p>}
         </>}
-    <h4>Histórico de movimentações</h4>
-    {history.isPending ? <p role="status">Carregando histórico...</p>
-      : history.isError ? <QueryError query={history} label="Não foi possível consultar o histórico" />
-        : history.data.content.length === 0 ? <p>Nenhuma movimentação nesta página.</p>
-          : <ol className="stock-history">{history.data.content.map((movement) =>
-            <li key={movement.id}>
-              <strong>{movement.type === 'IN' ? 'Entrada' : 'Saída'}: {movement.quantity} unidades</strong>
-              <span>Saldo após: {movement.balanceAfter} · {date.format(new Date(movement.createdAt))}</span>
-              <p>{movement.reason}</p>
-              <small>Responsável (ID): {movement.userId} · Operação: {movement.id}</small>
-            </li>)}</ol>}
-    <nav className="catalog-pagination" aria-label="Páginas do histórico">
-      <button type="button" className="secondary-button" disabled={page === 0 || history.isFetching}
-        onClick={() => setPage((value) => value - 1)}>Histórico anterior</button>
-      <span>Página {page + 1}</span>
-      <button type="button" className="secondary-button"
-        disabled={history.isError || !history.data?.hasNext || history.isFetching}
-        onClick={() => setPage((value) => value + 1)}>Próximo histórico</button>
-    </nav>
+    <section className="stock-history-section" aria-labelledby={historyTitleId}>
+      <h4 id={historyTitleId}>Histórico de movimentações</h4>
+      {history.isPending ? <p role="status">Carregando histórico...</p>
+        : history.isError ? <QueryError query={history} label="Não foi possível consultar o histórico" />
+          : history.data.content.length === 0 ? <p>Nenhuma movimentação nesta página.</p>
+            : <ol className="stock-history">{history.data.content.map((movement) =>
+              <li key={movement.id}>
+                <strong>{movement.type === 'IN' ? 'Entrada' : 'Saída'}: {movement.quantity} unidades</strong>
+                <span>Saldo após: {movement.balanceAfter} · {date.format(new Date(movement.createdAt))}</span>
+                <p>{movement.reason}</p>
+                <small>Responsável (ID): {movement.userId} · Operação: {movement.id}</small>
+              </li>)}</ol>}
+      <nav className="catalog-pagination" aria-label="Páginas do histórico">
+        <button type="button" className="secondary-button" disabled={page === 0 || history.isFetching}
+          onClick={() => setPage((value) => value - 1)}>Histórico anterior</button>
+        <span>Página {page + 1}</span>
+        <button type="button" className="secondary-button"
+          disabled={history.isError || !history.data?.hasNext || history.isFetching}
+          onClick={() => setPage((value) => value + 1)}>Próximo histórico</button>
+      </nav>
+    </section>
   </section>
 }
