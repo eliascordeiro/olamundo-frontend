@@ -19,6 +19,8 @@ export default function Icon({ name, size = 20, ...props }) {
     truck: <><path d="M3 5h11v12H3V5Zm11 4h4l3 4v4h-7" /><circle cx="7" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></>,
     tag: <><path d="m3 3 9 1 9 9-8 8-9-9-1-9Z" /><circle cx="8" cy="8" r="1" /></>,
     check: <path d="m5 12 4 4L19 6" />,
+    moon: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />,
+    contrast: <><circle cx="12" cy="12" r="9" /><path d="M12 3a9 9 0 0 1 0 18V3Z" fill="currentColor" /></>,
     exit: <><path d="M9 4H4v16h5m5-13 5 5-5 5m-6-5h13" /></>,
   }
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name]}</svg>

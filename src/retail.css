@@ -25,7 +25,8 @@
 .workspace-location > span { display: flex; gap: 12px; align-items: center; }
 .workspace-location strong { color: var(--t-244636); font-weight: 600; }
 .account-menu { display: flex; gap: 12px; align-items: center; font-size: 12px; }
-.theme-select { min-height: 34px; padding: 0 10px; border: 1px solid var(--b-dce3dd); border-radius: 8px; background: var(--g-ffffff); color: inherit; font-size: 12px; }
+.theme-toggle { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--b-dce3dd); border-radius: 8px; background: var(--g-ffffff); color: inherit; }
+.theme-toggle:hover { background: var(--g-eaf0e3); }
 .account-avatar { display: grid; place-items: center; width: 34px; height: 34px; background: var(--g-e8eee1); border-radius: 50%; color: var(--t-49603d); font-weight: 700; }
 .workspace-body { max-width: 1440px; margin: auto; padding: 32px clamp(20px, 3vw, 48px) 60px; }
 .workspace-intro { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 28px; }

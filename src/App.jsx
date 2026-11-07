@@ -5,7 +5,7 @@ import PlatformConsole from './features/platform/PlatformConsole'
 import AcceptInvite from './features/platform/AcceptInvite'
 import workspaceSections from './features/workspaceSections'
 import Icon from './components/Icon'
-import { saveTheme, readTheme, themes } from './theme'
+import { saveTheme, readTheme, otherTheme, themes } from './theme'
 import './App.css'
 import './retail.css'
 
@@ -161,9 +161,10 @@ function Workspace({ user }) {
   const [collapsed, setCollapsed] = useState(readSidebarPreference)
   const [theme, setTheme] = useState(readTheme)
 
-  function changeTheme(event) {
-    setTheme(event.target.value)
-    saveTheme(event.target.value)
+  function toggleTheme() {
+    const next = otherTheme(theme)
+    setTheme(next)
+    saveTheme(next)
   }
 
   function toggleSidebar() {
@@ -199,7 +200,7 @@ function Workspace({ user }) {
     <div className="workspace-content">
       <header className="workspace-header">
         <div className="workspace-location"><Icon name="store" size={18} /><span>Operação de loja <span aria-hidden="true">/</span> <strong>{workspaceSections.find(item => item.id === section).label}</strong></span></div>
-        <div className="account-menu"><select className="theme-select" aria-label="Tema" value={theme} onChange={changeTheme}>{themes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select><span className="account-avatar" aria-hidden="true">{user.name.slice(0, 1)}</span><span>{user.name}</span><button type="button" className="secondary-button" onClick={signOut} disabled={busy}><Icon name="exit" size={17} /> Sair</button></div>
+        <div className="account-menu"><button type="button" className="theme-toggle" onClick={toggleTheme} aria-label={`Mudar para ${themes.find(item => item.id === otherTheme(theme)).label.toLowerCase()}`} title={`Tema atual: ${themes.find(item => item.id === theme).label}`}><Icon name={theme === 'dark' ? 'moon' : 'contrast'} size={18} /></button><span className="account-avatar" aria-hidden="true">{user.name.slice(0, 1)}</span><span>{user.name}</span><button type="button" className="secondary-button" onClick={signOut} disabled={busy}><Icon name="exit" size={17} /> Sair</button></div>
       </header>
       <main className="workspace-body" id="workspace-content" tabIndex={-1}>
         <div className="workspace-intro"><div><span className="section-kicker">CADA ATENDIMENTO COMEÇA COM ORGANIZAÇÃO</span><h1>Olá, {user.name.split(' ')[0]}<span className="brand-dot">.</span></h1><p>Produtos, estoque e pedidos. No contexto certo, para atender melhor.</p></div><span className="retail-signature"><Icon name="sofa" size={22} /> Sua loja, mais próxima.</span></div>

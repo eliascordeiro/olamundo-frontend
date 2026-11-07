@@ -1,11 +1,10 @@
 export const themes = [
-  { id: 'light', label: 'Claro' },
   { id: 'dark', label: 'Escuro' },
   { id: 'contrast', label: 'Alto contraste' },
 ]
 
 const storageKey = 'nexo.theme'
-const themeColors = { light: '#103e34', dark: '#0b1411', contrast: '#000000' }
+const themeColors = { dark: '#0b1411', contrast: '#000000' }
 
 // Preferência de interface (não é dado de negócio); falhas de armazenamento são ignoradas.
 export function readTheme() {
@@ -13,10 +12,12 @@ export function readTheme() {
     const saved = window.localStorage.getItem(storageKey)
     if (themes.some(theme => theme.id === saved)) return saved
   } catch {
-    // Sem armazenamento, segue a preferência do sistema.
+    // Sem armazenamento (ou com o antigo tema claro), usa o padrão.
   }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return window.matchMedia?.('(prefers-contrast: more)').matches ? 'contrast' : 'dark'
 }
+
+export const otherTheme = id => (id === 'dark' ? 'contrast' : 'dark')
 
 export function applyTheme(id) {
   document.documentElement.dataset.theme = id

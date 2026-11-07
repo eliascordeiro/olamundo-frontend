@@ -55,7 +55,7 @@ test('modais móveis ocupam a janela na primeira abertura e acompanham redimensi
   await stockDialog.getByRole('button', { name: 'Fechar' }).click()
 })
 
-for (const theme of ['light', 'dark', 'contrast']) {
+for (const theme of ['dark', 'contrast']) {
   test(`modal de estoque mantém hierarquia e contraste no tema ${theme}`, async ({ page }) => {
     const api = await mockQueryApi(page, { user: marina })
     api.stores = [{ id: 'north', name: 'Loja Norte', role: 'OWNER' }]
